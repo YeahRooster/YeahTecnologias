@@ -1,0 +1,58 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import "./layout.css";
+import Link from "next/link";
+import { CartProvider } from "@/context/CartContext";
+import Header from "@/components/Header";
+import CartDrawer from "@/components/CartDrawer";
+import WhatsAppButton from "@/components/WhatsAppButton";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Yeah! Tecnologías | Insumos tecnológicos al por mayor",
+  description: "No es solo tecnología... es Yeah! Venta de insumos tecnológicos al por mayor con los mejores precios.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="es">
+      <body className={inter.className}>
+        <CartProvider>
+          <Header />
+          <CartDrawer />
+          <WhatsAppButton />
+          <main>{children}</main>
+
+          <footer className="footer">
+            <div className="container footer-content">
+              <div className="footer-section">
+                <h3>Yeah! Tecnologías</h3>
+                <p>Tu socio confiable para insumos tecnológicos al por mayor. Calidad y precio garantizados.</p>
+              </div>
+              <div className="footer-section">
+                <h3>Enlaces Rápidos</h3>
+                <Link href="/catalogo">Catálogo</Link>
+                <Link href="/cuenta">Mi Cuenta</Link>
+                <Link href="/contacto">Contacto</Link>
+              </div>
+              <div className="footer-section">
+                <h3>Contacto</h3>
+                <p>WhatsApp: +54 9 11 1234-5678</p>
+                <p>Email: ventas@yeahtecnologias.com</p>
+              </div>
+            </div>
+            <div className="footer-bottom">
+              <p>&copy; 2024 Yeah! Tecnologías. Todos los derechos reservados.</p>
+            </div>
+          </footer>
+        </CartProvider>
+      </body>
+    </html>
+  );
+}
