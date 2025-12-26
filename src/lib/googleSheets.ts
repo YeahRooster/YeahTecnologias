@@ -335,7 +335,7 @@ export async function updateOrderStatus(orderId: string, newStatus: string): Pro
 
     if (productsContent.includes('(x')) {
       const items = productsContent.split(';');
-      items.forEach(itemStr => {
+      items.forEach((itemStr: string) => {
         const match = itemStr.match(/(.+)\s\(x(\d+)\)/);
         if (match) {
           itemsToRestore.push({ name: match[1].trim(), qty: parseInt(match[2]) });
