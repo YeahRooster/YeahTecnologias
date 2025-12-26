@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductCard from "@/components/ProductCard";
 import { Filter, Loader2, X } from "lucide-react";
@@ -15,7 +15,7 @@ interface Product {
     category: string;
 }
 
-export default function CatalogPage() {
+function CatalogContent() {
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get('buscar') || '';
 
@@ -225,5 +225,19 @@ export default function CatalogPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function CatalogPage() {
+    return (
+        <Suspense fallback={
+            <div className="container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
+                <Loader2 size={48} style={{ animation: 'spin 1s linear infinite' }} />
+                <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Cargando...</p>
+                <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+            </div>
+        }>
+            <CatalogContent />
+        </Suspense>
     );
 }
