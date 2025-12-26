@@ -1,18 +1,18 @@
 @echo off
 color 0A
 echo ==========================================
-echo   ACTUALIZAR CODIGO EN GITHUB
+echo   ACTUALIZAR - FIX COMPLETO TYPESCRIPT
 echo ==========================================
 echo.
 
 cd /d "C:\Users\Rooster\.gemini\antigravity\scratch\tienda-mayorista"
 
-echo [1] Agregando cambios...
-git add .
+echo [1] Agregando todos los cambios...
+git add -A
 echo.
 
 echo [2] Creando commit...
-git commit -m "Fix: Corregir error TypeScript en googleSheets.ts"
+git commit -m "Fix: Corregir TODOS los errores TypeScript - tipos explicitos"
 echo.
 
 echo [3] Subiendo a GitHub...
@@ -22,13 +22,13 @@ echo.
 echo ==========================================
 if %errorlevel% equ 0 (
     echo.
-    echo *** EXITO! ***
+    echo *** CODIGO ACTUALIZADO! ***
     echo.
-    echo Vercel detectara el cambio y redesplegara automaticamente
-    echo Ve a https://vercel.com/yeahrooster-s-projects/yeahtecnologias
+    echo Vercel redesplegara automaticamente en 1-2 minutos
+    echo Revisa: https://vercel.com/yeahrooster-s-projects/yeahtecnologias
     echo.
 ) else (
-    echo Hubo un error al subir
+    echo Hubo un error
 )
 echo ==========================================
 echo.

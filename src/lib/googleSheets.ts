@@ -343,11 +343,11 @@ export async function updateOrderStatus(orderId: string, newStatus: string): Pro
       });
     } else {
       const quantitiesStr = orderRow.get('Cantidades') || '';
-      const productNames = productsContent.split(',').map(s => s.trim());
-      const quantities = quantitiesStr.split(',').map(s => parseInt(s.trim()));
+      const productNames = productsContent.split(',').map((s: string) => s.trim());
+      const quantities = quantitiesStr.split(',').map((s: string) => parseInt(s.trim()));
 
       if (productNames.length === quantities.length) {
-        productNames.forEach((name, idx) => {
+        productNames.forEach((name: string, idx: number) => {
           itemsToRestore.push({ name, qty: quantities[idx] || 1 });
         });
       } else {
@@ -360,7 +360,7 @@ export async function updateOrderStatus(orderId: string, newStatus: string): Pro
       const productRows = await productsSheet.getRows();
 
       for (const item of itemsToRestore) {
-        const productRow = productRows.find(row => row.get('Nombre') === item.name);
+        const productRow = productRows.find((row: any) => row.get('Nombre') === item.name);
         if (productRow) {
           const currentStock = parseInt(productRow.get('Stock') || '0');
           productRow.set('Stock', (currentStock + item.qty).toString());
