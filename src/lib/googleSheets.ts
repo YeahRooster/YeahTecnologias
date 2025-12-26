@@ -308,6 +308,7 @@ export async function createOrder(order: {
 }
 
 // Actualizar estado del pedido (y restituir stock si se cancela)
+// TEMPORALMENTE DESACTIVADA PARA DEPLOYMENT
 export async function updateOrderStatus(orderId: string, newStatus: string): Promise<{ success: boolean; email?: string; customerName?: string }> {
   const doc = await getDoc();
   const ordersSheet = doc.sheetsByTitle['Pedidos'];
@@ -319,10 +320,36 @@ export async function updateOrderStatus(orderId: string, newStatus: string): Pro
 
   if (!orderRow) return { success: false };
 
-  const oldStatus = orderRow.get('Estado');
+  // Actualizar estado sin restitución de stock por ahora
+  orderRow.set('Estado', newStatus);
+  await orderRow.save();
 
+  const email = orderRow.get('Email');
+  const user = await findUserByEmail(email);
+
+  return {
+    success: true,
+    email: email,
+    customerName: user?.nombreCompleto || 'Cliente'
+  };
+}
+
+/* CODIGO COMENTADO TEMPORALMENTE - SE AGREGARA DESPUES DEL DEPLOYMENT
+export async function updateOrderStatus(orderId: string, newStatus: string): Promise<{ success: boolean; email?: string; customerName?: string }> {
+  const doc = await getDoc();
+  const ordersSheet = doc.sheetsByTitle['Pedidos'];
+  
+  if (!ordersSheet) throw new Error('No se encontró la hoja de Pedidos');
+
+  const rows = await ordersSheet.getRows();
+  const orderRow = rows.find(row => row.get('ID de pedido') === orderId);
+
+  if (!orderRow) return { success: false };
+
+  const oldStatus = orderRow.get('Estado');
+  
   if (oldStatus === 'Cancelado' && newStatus === 'Cancelado') {
-    return { success: true };
+      return { success: true };
   }
 
   orderRow.set('Estado', newStatus);
@@ -330,7 +357,7 @@ export async function updateOrderStatus(orderId: string, newStatus: string): Pro
 
   if (newStatus === 'Cancelado' && oldStatus !== 'Cancelado') {
     const productsContent = orderRow.get('Productos') || '';
-
+    
     const itemsToRestore: { name: string, qty: number }[] = [];
 
     if (productsContent.includes('(x')) {
@@ -380,6 +407,7 @@ export async function updateOrderStatus(orderId: string, newStatus: string): Pro
     customerName: user?.nombreCompleto || 'Cliente'
   };
 }
+*/
 
 // Crear alerta de stock
 export async function createStockAlert(email: string, productName: string): Promise<boolean> {
