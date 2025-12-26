@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAllOrders, updateOrderStatus } from '@/lib/googleSheets';
+import { getAllOrders } from '@/lib/googleSheets';
+// import { updateOrderStatus } from '@/lib/googleSheets'; // COMENTADO TEMPORALMENTE
 import { sendOrderStatusUpdate } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
     }
 }
 
+/* METODO PUT COMENTADO TEMPORALMENTE PARA DEPLOYMENT
 export async function PUT(request: Request) {
     try {
         const { orderId, status, password } = await request.json();
@@ -79,3 +81,4 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'Error interno' }, { status: 500 });
     }
 }
+*/
