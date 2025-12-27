@@ -3,16 +3,21 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductCard from "@/components/ProductCard";
+import ProductModal from "@/components/ProductModal";
 import { Filter, Loader2, X } from "lucide-react";
 
 interface Product {
     id: string;
-    name: string;
+    nombre: string;
+    name: string; // Compatibilidad
     description: string;
-    price: number;
-    stock: number;
-    image: string;
+    precio: number;
+    price: number; // Compatibilidad
+    stock: boolean;
+    imagen: string;
+    image: string; // Compatibilidad
     category: string;
+    categoria: string; // Compatibilidad
 }
 
 function CatalogContent() {
@@ -27,13 +32,27 @@ function CatalogContent() {
     const [maxPrice, setMaxPrice] = useState<number | ''>('');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'default'>('default');
 
+    // Estado para el Modal
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
     useEffect(() => {
         async function fetchProducts() {
             try {
                 const response = await fetch('/api/products');
                 if (!response.ok) throw new Error('Error al cargar productos');
                 const data = await response.json();
-                setProducts(data);
+
+                // Normalizar datos para asegurar compatibilidad entre español (Google Sheets) e inglés (UI)
+                const normalizedData = data.map((item: any) => ({
+                    ...item,
+                    name: item.nombre || item.name,
+                    price: item.precio || item.price,
+                    image: item.imagen || item.image,
+                    category: item.categoria || item.category,
+                    stock: item.stock
+                }));
+
+                setProducts(normalizedData);
             } catch (err) {
                 setError('No se pudieron cargar los productos. Intenta nuevamente.');
                 console.error(err);
@@ -62,7 +81,7 @@ function CatalogContent() {
         // Búsqueda
         const matchesSearch = !searchQuery ||
             p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
             p.category.toLowerCase().includes(searchQuery.toLowerCase());
 
         // Precio
@@ -99,6 +118,7 @@ function CatalogContent() {
 
     return (
         <div className="container" style={{ padding: '2rem 1rem' }}>
+            {/* Header del Catálogo */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                     <h1 className="section-title" style={{ margin: 0, textAlign: 'left' }}>
@@ -140,11 +160,11 @@ function CatalogContent() {
                             backgroundColor: 'white',
                             cursor: 'pointer',
                             minWidth: '200px',
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
                             backgroundRepeat: 'no-repeat',
                             backgroundPosition: 'right 0.5rem center',
                             backgroundSize: '1.25rem',
-                            appearance: 'none'
+                            appearance: 'none',
+                            borderRight: '10px solid transparent' // Hack simple para flecha
                         }}
                     >
                         {categories.map((cat) => (
@@ -188,10 +208,6 @@ function CatalogContent() {
                             backgroundColor: 'white',
                             cursor: 'pointer',
                             minWidth: '180px',
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                            backgroundRepeat: 'no-repeat',
-                            backgroundPosition: 'right 0.5rem center',
-                            backgroundSize: '1.25rem',
                             appearance: 'none'
                         }}
                     >
@@ -202,16 +218,32 @@ function CatalogContent() {
                 </div>
             </div>
 
+            {/* GRID DE PRODUCTOS */}
             <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
                 gap: '2rem'
             }}>
                 {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <div
+                        key={product.id}
+                        onClick={() => setSelectedProduct(product)}
+                        style={{ cursor: 'pointer' }}
+                        title="Clic para ver detalles"
+                    >
+                        <ProductCard product={{
+                            ...product,
+                            name: product.name,
+                            price: product.price,
+                            image: product.image,
+                            category: product.category,
+                            stock: product.stock ? 1 : 0 // Adaptador simple
+                        }} />
+                    </div>
                 ))}
             </div>
 
+            {/* EMPTY STATE */}
             {filteredProducts.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                     <p>No hay productos que coincidan con tu búsqueda.</p>
@@ -223,6 +255,14 @@ function CatalogContent() {
                         </p>
                     )}
                 </div>
+            )}
+
+            {/* MODAL DE DETALLE */}
+            {selectedProduct && (
+                <ProductModal
+                    product={selectedProduct}
+                    onClose={() => setSelectedProduct(null)}
+                />
             )}
         </div>
     );

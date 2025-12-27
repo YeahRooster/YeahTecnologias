@@ -27,19 +27,22 @@ export default function ProductCard({ product }: ProductCardProps) {
     const maxStock = product.stock || 0;
     const outOfStock = maxStock <= 0;
 
-    const handleIncrease = () => {
+    const handleIncrease = (e: React.MouseEvent) => {
+        e.stopPropagation();
         if (quantity < maxStock) {
             setQuantity(q => q + 1);
         }
     };
 
-    const handleDecrease = () => {
+    const handleDecrease = (e: React.MouseEvent) => {
+        e.stopPropagation();
         if (quantity > 1) {
             setQuantity(q => q - 1);
         }
     };
 
-    const handleAddToCart = () => {
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.stopPropagation();
         if (outOfStock) return;
 
         addToCart({
@@ -77,11 +80,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <span className={styles.category}>{product.category}</span>
                 <h3 className={styles.title}>{product.name}</h3>
 
-                {product.description && (
-                    <p className={styles.description} title={product.description}>
-                        {product.description}
-                    </p>
-                )}
+
 
                 <div className={styles.priceRow}>
                     <span className={styles.price}>${product.price.toLocaleString('es-AR')}</span>
