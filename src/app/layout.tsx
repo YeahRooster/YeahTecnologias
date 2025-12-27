@@ -7,6 +7,7 @@ import { CartProvider } from "@/context/CartContext";
 import Header from "@/components/Header";
 import CartDrawer from "@/components/CartDrawer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import PriceWarning from "@/components/PriceWarning";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
     <html lang="es">
       <body className={inter.className}>
         <CartProvider>
+          <PriceWarning />
           <Header />
           <CartDrawer />
           <WhatsAppButton />
@@ -39,11 +41,11 @@ export default function RootLayout({
                 <h3>Enlaces Rápidos</h3>
                 <Link href="/catalogo">Catálogo</Link>
                 <Link href="/cuenta">Mi Cuenta</Link>
-                <Link href="/contacto">Contacto</Link>
+                <a href="https://wa.me/5493425924747" target="_blank" rel="noopener noreferrer">Contacto</a>
               </div>
               <div className="footer-section">
                 <h3>Contacto</h3>
-                <p>WhatsApp: +54 9 11 1234-5678</p>
+                <p>WhatsApp: +54 9 342 592 4747</p>
                 <p>Email: ventas@yeahtecnologias.com</p>
               </div>
             </div>

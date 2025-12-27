@@ -77,9 +77,14 @@ export default function BlogPage() {
                     <div className={`${styles.sidebarWidget} ${styles.newsletterWidget}`}>
                         <h3>🚀 Potencia tu negocio</h3>
                         <p>Únete a nuestra lista exclusiva para recibir ofertas mayoristas y tips.</p>
-                        <Link href="/contacto" className={styles.subscribeBtn}>
+                        <a
+                            href="https://wa.me/5493425924747?text=Hola!%20Vengo%20leyendo%20su%20Blog%20y%20me%20gustar%C3%ADa%20recibir%20m%C3%A1s%20informaci%C3%B3n."
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.subscribeBtn}
+                        >
                             Contactar Ahora
-                        </Link>
+                        </a>
                     </div>
                 </aside>
             </div>
