@@ -18,9 +18,14 @@ export default function Home() {
                 <Link href="/catalogo" className="btn btn-primary">
                   Ver Catálogo <ArrowRight size={20} style={{ marginLeft: '8px' }} />
                 </Link>
-                <Link href="/contacto" className="btn btn-outline">
+                <a
+                  href="https://wa.me/5493425924747?text=Hola!%20Vengo%20de%20la%20web%20y%20quiero%20consultar%20con%20ventas."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-outline"
+                >
                   Contactar Ventas
-                </Link>
+                </a>
               </div>
             </div>
           </div>
@@ -43,7 +48,7 @@ export default function Home() {
       <section className={styles.ctaSection}>
         <div className="container">
           <h2>¿Listo para hacer tu pedido?</h2>
-          <p>Explorá nuestro catálogo completo con más de 100 productos</p>
+          <p>Explorá nuestro catálogo y aprovechá nuestras ofertas. ¡Contactate para asesoramiento personalizado!</p>
           <Link href="/catalogo" className="btn btn-primary">
             Ir al Catálogo
           </Link>
