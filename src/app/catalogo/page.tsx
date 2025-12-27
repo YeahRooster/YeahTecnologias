@@ -52,7 +52,7 @@ function CatalogContent() {
                     stock: item.stock
                 }));
 
-                setProducts(normalizedData);
+                setProducts(normalizedData.reverse());
             } catch (err) {
                 setError('No se pudieron cargar los productos. Intenta nuevamente.');
                 console.error(err);
