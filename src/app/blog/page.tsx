@@ -1,82 +1,87 @@
 'use client';
 
-import { Book, TrendingUp, Target, Lightbulb, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { getAllPosts, getAllCategories } from '@/data/blogPosts';
 import Link from 'next/link';
+import { Calendar, User, ArrowRight, Tag, BookOpen } from 'lucide-react';
 import styles from './blog.module.css';
 
-// Artículos de ejemplo (en el futuro pueden venir de una base de datos)
-const articles = [
-    {
-        id: 'como-vender-auriculares-gamer',
-        title: 'Cómo vender auriculares gamer en 2025',
-        excerpt: 'Descubrí las claves para maximizar tus ventas en uno de los productos más buscados.',
-        category: 'Guías de Venta',
-        readTime: '5 min',
-        icon: TrendingUp,
-        color: '#667eea',
-    },
-    {
-        id: 'errores-comunes-revender-celulares',
-        title: '5 errores que todo revendedor de celulares debe evitar',
-        excerpt: 'Aprendé de los errores más comunes y ahorrá tiempo y dinero en tu negocio.',
-        category: 'Consejos',
-        readTime: '4 min',
-        icon: Target,
-        color: '#f093fb',
-    },
-    {
-        id: 'tendencias-tech-2025',
-        title: 'Tendencias tech que tus clientes buscan en 2025',
-        excerpt: 'Mantenete al día con las tecnologías más demandadas del momento.',
-        category: 'Tendencias',
-        readTime: '6 min',
-        icon: Lightbulb,
-        color: '#4facfe',
-    },
-];
-
 export default function BlogPage() {
+    const allPosts = getAllPosts();
+    const categories = getAllCategories();
+    const [selectedCategory, setSelectedCategory] = useState('Todas');
+
+    const filteredPosts = selectedCategory === 'Todas'
+        ? allPosts
+        : allPosts.filter(post => post.category === selectedCategory);
+
     return (
-        <div className={styles.container}>
-            <div className={styles.hero}>
-                <Book size={48} />
-                <h1>Centro de Recursos</h1>
-                <p>Guías, consejos y estrategias para vender más</p>
+        <div className="container" style={{ padding: '2rem 1rem' }}>
+            {/* HERO SECTION DEL BLOG */}
+            <div className={styles.blogHero}>
+                <div>
+                    <h1>Blog de Tecnología & Negocios</h1>
+                    <p>Las últimas tendencias, guías de compra y consejos para potenciar tu negocio.</p>
+                </div>
             </div>
 
-            <div className={styles.articlesGrid}>
-                {articles.map((article) => {
-                    const Icon = article.icon;
-                    return (
-                        <Link
-                            href={`/blog/${article.id}`}
-                            key={article.id}
-                            className={styles.articleCard}
-                            style={{ '--article-color': article.color } as React.CSSProperties}
-                        >
-                            <div className={styles.articleIcon}>
-                                <Icon size={32} />
-                            </div>
-                            <div className={styles.articleContent}>
-                                <span className={styles.category}>{article.category}</span>
-                                <h2>{article.title}</h2>
-                                <p>{article.excerpt}</p>
-                                <div className={styles.articleMeta}>
-                                    <span>{article.readTime} de lectura</span>
-                                    <ArrowRight size={20} className={styles.arrow} />
+            <div className={styles.blogLayout}>
+                {/* COLUMNA PRINCIPAL - ARTICULOS */}
+                <main className={styles.mainColumn}>
+                    <div className={styles.postsGrid}>
+                        {filteredPosts.map((post) => (
+                            <Link href={`/blog/${post.slug}`} key={post.id} className={styles.postCard}>
+                                <div className={styles.imageWrapper}>
+                                    <img src={post.imageUrl} alt={post.title} />
+                                    <span className={styles.badge}>{post.category}</span>
                                 </div>
-                            </div>
-                        </Link>
-                    );
-                })}
-            </div>
+                                <div className={styles.cardContent}>
+                                    <div className={styles.meta}>
+                                        <span className={styles.metaItem}><Calendar size={14} /> {post.date}</span>
+                                        <span className={styles.metaItem}><User size={14} /> {post.author}</span>
+                                    </div>
+                                    <h3>{post.title}</h3>
+                                    <p>{post.excerpt}</p>
+                                    <div className={styles.readMore}>
+                                        Leer artículo <ArrowRight size={16} />
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
 
-            <div className={styles.cta}>
-                <h2>¿Querés más consejos exclusivos?</h2>
-                <p>Registrate y recibí tips, ofertas especiales y recursos premium para revendedores</p>
-                <Link href="/registro" className={styles.ctaButton}>
-                    Registrarme Gratis
-                </Link>
+                    {filteredPosts.length === 0 && (
+                        <div className={styles.emptyState}>
+                            <p>No hay artículos en esta categoría por el momento.</p>
+                        </div>
+                    )}
+                </main>
+
+                {/* BARRA LATERAL */}
+                <aside className={styles.sidebar}>
+                    <div className={styles.sidebarWidget}>
+                        <h3> <BookOpen size={20} /> Categorías</h3>
+                        <div className={styles.categoryList}>
+                            {categories.map(cat => (
+                                <button
+                                    key={cat}
+                                    className={`${styles.catBtn} ${selectedCategory === cat ? styles.activeCat : ''}`}
+                                    onClick={() => setSelectedCategory(cat)}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className={`${styles.sidebarWidget} ${styles.newsletterWidget}`}>
+                        <h3>🚀 Potencia tu negocio</h3>
+                        <p>Únete a nuestra lista exclusiva para recibir ofertas mayoristas y tips.</p>
+                        <Link href="/contacto" className={styles.subscribeBtn}>
+                            Contactar Ahora
+                        </Link>
+                    </div>
+                </aside>
             </div>
         </div>
     );
