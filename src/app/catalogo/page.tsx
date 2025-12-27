@@ -237,7 +237,7 @@ function CatalogContent() {
                             price: product.price,
                             image: product.image,
                             category: product.category,
-                            stock: product.stock ? 1 : 0 // Adaptador simple
+                            stock: typeof product.stock === 'number' ? product.stock : (product.stock ? 9999 : 0)
                         }} />
                     </div>
                 ))}

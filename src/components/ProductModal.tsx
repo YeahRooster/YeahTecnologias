@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, ShoppingCart, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, ShoppingCart, ChevronRight, ChevronLeft, Plus, Minus } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import styles from './ProductModal.module.css';
 
@@ -15,7 +15,7 @@ interface Product {
     category?: string;
     imagen?: string;
     image?: string;
-    stock: boolean;
+    stock: boolean | number;
     descripcion?: string;
     description?: string;
 }
@@ -34,7 +34,6 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
     const productCategory = product.categoria || product.category || 'General';
     const productImage = product.imagen || product.image || '';
 
-    // Prioridad: Descripción explícita -> Mensaje default
     const productDescription = product.descripcion || product.description ||
         "Haz clic en agregar para sumar este producto a tu pedido. Recuerda que los precios finales se confirman al cerrar la compra dependiendo la cotización del día.";
 
@@ -44,6 +43,10 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
         : ['/placeholder.png'];
 
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [quantity, setQuantity] = useState(1);
+
+    // Determinar stock máximo (si es booleano true -> 9999, si es número -> ese número)
+    const maxStock = typeof product.stock === 'number' ? product.stock : (product.stock ? 9999 : 0);
 
     const handleNextImage = () => {
         setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -51,6 +54,13 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
 
     const handlePrevImage = () => {
         setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    };
+
+    const handleQuantityChange = (delta: number) => {
+        const newQty = quantity + delta;
+        if (newQty >= 1 && newQty <= maxStock) {
+            setQuantity(newQty);
+        }
     };
 
     const handleAddToCart = () => {
@@ -64,7 +74,8 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
             name: productName,
             price: productPrice,
             image: images[0],
-            quantity: 1
+            quantity: quantity,
+            maxStock: maxStock
         });
         // Opcional: Cerrar modal al agregar
         onClose();
@@ -140,6 +151,34 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
                         <p className={styles.description}>
                             {productDescription}
                         </p>
+
+                        {/* SELECTOR DE CANTIDAD */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <span style={{ fontWeight: 600, color: '#64748b' }}>Cantidad:</span>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '0.5rem',
+                                overflow: 'hidden'
+                            }}>
+                                <button
+                                    onClick={() => handleQuantityChange(-1)}
+                                    disabled={quantity <= 1}
+                                    style={{ padding: '0.5rem', background: 'white', border: 'none', cursor: 'pointer' }}
+                                >
+                                    <Minus size={18} />
+                                </button>
+                                <span style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }}>{quantity}</span>
+                                <button
+                                    onClick={() => handleQuantityChange(1)}
+                                    disabled={quantity >= maxStock}
+                                    style={{ padding: '0.5rem', background: 'white', border: 'none', cursor: 'pointer' }}
+                                >
+                                    <Plus size={18} />
+                                </button>
+                            </div>
+                        </div>
 
                         <div className={styles.actions}>
                             <button
