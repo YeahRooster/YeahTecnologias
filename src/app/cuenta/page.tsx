@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Package, Edit3, LogOut, Save, X } from 'lucide-react';
+import { User, Package, Edit3, LogOut, Save, X, Printer } from 'lucide-react';
 import styles from './cuenta.module.css';
 
 interface UserData {
@@ -316,6 +316,11 @@ export default function CuentaPage() {
                                     </div>
                                     <div className={styles.orderTotal}>
                                         Total: <strong>${order.total.toLocaleString('es-AR')}</strong>
+                                    </div>
+                                    <div style={{ marginTop: '15px' }}>
+                                        <a href={`/comprobante/${order.idPedido}`} target="_blank" className={styles.printLink} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', textDecoration: 'none', color: '#4f46e5', fontWeight: 600, fontSize: '0.9rem' }}>
+                                            <Printer size={16} /> Imprimir Comprobante
+                                        </a>
                                     </div>
                                 </div>
                             ))}

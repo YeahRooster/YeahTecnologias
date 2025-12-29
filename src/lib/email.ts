@@ -123,7 +123,8 @@ export async function sendOrderNotification(orderData: OrderEmailData) {
 
   const mailOptions = {
     from: `"Yeah! Tecnologías" <${process.env.EMAIL_USER}>`,
-    to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+    to: orderData.customerEmail,
+    bcc: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
     subject: `🛒 Nuevo Pedido #${orderData.orderId} - ${orderData.customerName}`,
     html: htmlContent,
   };

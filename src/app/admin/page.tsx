@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Package, Search, Filter, X, Save, AlertTriangle } from 'lucide-react';
+import { Package, Search, Filter, X, Save, AlertTriangle, Printer } from 'lucide-react';
 import styles from './admin.module.css';
 
 interface Order {
@@ -327,9 +327,24 @@ export default function AdminPage() {
                                 <h2>Pedido {selectedOrder.idPedido}</h2>
                                 <span className={styles.dateInfo}>{selectedOrder.fecha}</span>
                             </div>
-                            <button className={styles.closeBtn} onClick={() => setSelectedOrder(null)}>
-                                <X size={24} />
-                            </button>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <a
+                                    href={`/comprobante/${selectedOrder.idPedido}`}
+                                    target="_blank"
+                                    className={styles.printBtn}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: '5px',
+                                        padding: '5px 10px', borderRadius: '5px',
+                                        backgroundColor: '#f3f4f6', textDecoration: 'none', color: '#333',
+                                        fontSize: '0.9rem', fontWeight: 600
+                                    }}
+                                >
+                                    <Printer size={18} /> Imprimir Remito
+                                </a>
+                                <button className={styles.closeBtn} onClick={() => setSelectedOrder(null)}>
+                                    <X size={24} />
+                                </button>
+                            </div>
                         </div>
 
                         <div className={styles.modalContent}>
