@@ -4,54 +4,35 @@ import nodemailer from 'nodemailer';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-    // 1. Verificar variables de entorno
-    const user = process.env.EMAIL_USER;
-    const pass = process.env.EMAIL_PASSWORD; // Ojo, no mostrar esto completo en logs
+    const user = process.env.EMAIL_USER || '';
+    const pass = process.env.EMAIL_PASSWORD || '';
 
-    if (!user || !pass) {
-        return NextResponse.json({
-            error: 'Faltan variables de entorno',
-            details: { hasUser: !!user, hasPass: !!pass }
-        }, { status: 500 });
-    }
+    // MÁSCARA DE SEGURIDAD
+    const maskPass = (p: string) => {
+        if (!p) return 'VACÍA';
+        if (p.length < 4) return 'MUY CORTA';
+        return p.substring(0, 2) + '*'.repeat(p.length - 4) + p.substring(p.length - 2);
+    };
 
+    let smtpResult = "";
     try {
-        // 2. Crear transporter
         const transporter = nodemailer.createTransport({
             service: 'gmail',
-            auth: {
-                user: user,
-                pass: pass,
-            },
+            auth: { user, pass },
         });
-
-        // 3. Verificar conexión
         await transporter.verify();
-        console.log('✅ Conexión SMTP exitosa');
-
-        // 4. Intentar enviar email
-        const info = await transporter.sendMail({
-            from: `"Test Yeah!" <${user}>`,
-            to: user, // Se envía a sí mismo
-            subject: "Prueba de Configuración de Email 📧",
-            text: "Si lees esto, el sistema de correos funciona correctamente.",
-            html: "<b>Si lees esto, el sistema de correos funciona correctamente.</b>",
-        });
-
-        return NextResponse.json({
-            success: true,
-            message: 'Email enviado correctamente',
-            messageId: info.messageId,
-            destination: user
-        });
-
-    } catch (error: any) {
-        console.error('❌ Error enviando email de prueba:', error);
-        return NextResponse.json({
-            success: false,
-            error: error.message,
-            code: error.code,
-            command: error.command
-        }, { status: 500 });
+        smtpResult = "CONEXION EXITOSA ✅";
+    } catch (e: any) {
+        smtpResult = "FALLO ❌: " + e.message;
     }
+
+    return NextResponse.json({
+        diagnostico: {
+            usuario_leido: user,
+            longitud_password: pass.length,
+            password_mascarada: maskPass(pass),
+            tiene_espacios: pass.includes(' ')
+        },
+        resultado_smtp: smtpResult
+    });
 }
