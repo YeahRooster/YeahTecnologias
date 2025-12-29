@@ -319,9 +319,19 @@ export async function updateOrderStatus(orderId: string, newStatus: string): Pro
 
     if (!orderRow) return { success: false };
 
-    // Actualizar estado
-    orderRow.set('Estado', newStatus);
+    // Actualizar estado con robustez
+    try {
+      orderRow.set('Estado', newStatus);
+    } catch (e) {
+      // Fallback si la columna se llama 'estado'
+      orderRow.set('estado', newStatus);
+    }
+
     await orderRow.save();
+
+    // IMPORTANTE: Limpiar la caché para que la próxima lectura traiga el cambio real
+    cachedDoc = null;
+    lastConnectionTime = 0;
 
     // Obtener datos para el email
     const email = orderRow.get('Email');
@@ -344,20 +354,18 @@ export async function updateOrderStatus(orderId: string, newStatus: string): Pro
   }
 }
 
-
 // Crear alerta de stock
 export async function createStockAlert(email: string, productName: string): Promise<boolean> {
   const doc = await getDoc();
   let alertsSheet = doc.sheetsByTitle['Alertas'];
 
-  // Si no existe la hoja, intentamos crearla (esto requiere permisos de admin en el sheet, si falla, habrá que crearla manual)
   if (!alertsSheet) {
     try {
       alertsSheet = await doc.addSheet({ title: 'Alertas', headerValues: ['Email', 'Producto', 'Fecha'] });
       console.log('✅ Hoja de Alertas creada automáticamente');
     } catch (e) {
       console.warn('⚠️ No se encontró la hoja de Alertas y no se pudo crear automáticamente. Por favor, créala manualmente.');
-      return false; // Retornamos false si no hay hoja donde escribir
+      return false;
     }
   }
 

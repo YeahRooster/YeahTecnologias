@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Package, Search, Filter, X, Save, AlertTriangle, Printer } from 'lucide-react';
+import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye } from 'lucide-react';
 import styles from './admin.module.css';
 
 interface Order {
@@ -29,17 +29,15 @@ export default function AdminPage() {
     const [updating, setUpdating] = useState(false);
     const [updateMessage, setUpdateMessage] = useState('');
 
-    // Cargar contraseña guardada si existe (opcional, por comodidad en dev)
     useEffect(() => {
-        // const savedPwd = localStorage.getItem('adminPwd');
-        // if (savedPwd) setPassword(savedPwd);
+        // Opcional: Recuperar sesión
     }, []);
 
     const fetchOrders = async (pwd: string) => {
         setLoading(true);
         setError('');
         try {
-            // IMPORTANTE: cache: 'no-store' evita que el navegador guarde datos viejos
+            // No cachear para ver cambios frescos
             const response = await fetch(`/api/admin?password=${encodeURIComponent(pwd)}`, { cache: 'no-store' });
 
             if (!response.ok) {
@@ -62,7 +60,6 @@ export default function AdminPage() {
         const success = await fetchOrders(password);
         if (success) {
             setIsAuthenticated(true);
-            // localStorage.setItem('adminPwd', password);
         }
     };
 
@@ -87,7 +84,7 @@ export default function AdminPage() {
                 body: JSON.stringify({
                     orderId: selectedOrder.idPedido,
                     status: newStatus,
-                    password: password // Enviar password para validar
+                    password: password
                 }),
             });
 
@@ -167,9 +164,7 @@ export default function AdminPage() {
                 <div className={styles.loginCard}>
                     <h1>🔐 Panel de Administrador</h1>
                     <p>Yeah! Tecnologías</p>
-
                     {error && <div className={styles.error}>{error}</div>}
-
                     <form onSubmit={handleLogin} className={styles.loginForm}>
                         <input
                             type="password"
@@ -198,6 +193,7 @@ export default function AdminPage() {
 
             {/* DASHBOARD DE MÉTRICAS */}
             <div className={styles.statsGrid}>
+                {/* ... (Métricas igual que antes) ... */}
                 <div className={styles.statCard}>
                     <Package size={32} />
                     <div>
@@ -240,24 +236,7 @@ export default function AdminPage() {
                 </div>
             </div>
 
-            {/* PRODUCTOS MÁS VENDIDOS */}
-            {topProducts.length > 0 && (
-                <div className={styles.topProductsSection}>
-                    <h2>🏆 Productos Más Vendidos</h2>
-                    <div className={styles.topProductsGrid}>
-                        {topProducts.map(([product, qty], index) => (
-                            <div key={product} className={styles.topProductCard}>
-                                <div className={styles.productRank}>#{index + 1}</div>
-                                <div className={styles.productInfo}>
-                                    <p className={styles.productName}>{product}</p>
-                                    <p className={styles.productQty}>{qty} unidades vendidas</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
+            {/* CONTROL DE BÚSQUEDA Y FILTROS */}
             <div className={styles.controls}>
                 <div className={styles.searchBar}>
                     <Search size={20} />
@@ -268,7 +247,6 @@ export default function AdminPage() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-
                 <div className={styles.filters}>
                     {estados.map(estado => (
                         <button
@@ -282,6 +260,7 @@ export default function AdminPage() {
                 </div>
             </div>
 
+            {/* TABLA DE PEDIDOS */}
             <div className={styles.ordersTable}>
                 <table>
                     <thead>
@@ -309,7 +288,6 @@ export default function AdminPage() {
                         ))}
                     </tbody>
                 </table>
-
                 {filteredOrders.length === 0 && (
                     <div className={styles.noResults}>
                         <Package size={48} />
@@ -331,15 +309,26 @@ export default function AdminPage() {
                                 <a
                                     href={`/comprobante/${selectedOrder.idPedido}`}
                                     target="_blank"
-                                    className={styles.printBtn}
                                     style={{
                                         display: 'flex', alignItems: 'center', gap: '5px',
                                         padding: '5px 10px', borderRadius: '5px',
-                                        backgroundColor: '#f3f4f6', textDecoration: 'none', color: '#333',
+                                        backgroundColor: 'white', border: '1px solid #ddd', textDecoration: 'none', color: '#333',
                                         fontSize: '0.9rem', fontWeight: 600
                                     }}
                                 >
-                                    <Printer size={18} /> Imprimir Remito
+                                    <Eye size={18} /> Ver Remito
+                                </a>
+                                <a
+                                    href={`/comprobante/${selectedOrder.idPedido}`}
+                                    target="_blank"
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: '5px',
+                                        padding: '5px 10px', borderRadius: '5px',
+                                        backgroundColor: '#4f46e5', textDecoration: 'none', color: 'white',
+                                        fontSize: '0.9rem', fontWeight: 600
+                                    }}
+                                >
+                                    <Printer size={18} /> Imprimir
                                 </a>
                                 <button className={styles.closeBtn} onClick={() => setSelectedOrder(null)}>
                                     <X size={24} />
@@ -390,7 +379,6 @@ export default function AdminPage() {
                                     </button>
                                 </div>
                                 {updateMessage && <p className={styles.message}>{updateMessage}</p>}
-
                                 {newStatus === 'Cancelado' && selectedOrder.estado !== 'Cancelado' && (
                                     <div className={styles.warningBox}>
                                         <AlertTriangle size={20} />
