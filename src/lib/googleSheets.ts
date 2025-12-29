@@ -307,8 +307,42 @@ export async function createOrder(order: {
   return orderId;
 }
 
-// FUNCION UPDATEORDERSTATUS TEMPORALMENTE ELIMINADA PARA DEPLOYMENT
-// Se puede re-implementar después del deployment exitoso
+// Actualizar estado de un pedido
+export async function updateOrderStatus(orderId: string, newStatus: string): Promise<{ success: boolean; email?: string; customerName?: string }> {
+  try {
+    const doc = await getDoc();
+    const sheet = doc.sheetsByTitle['Pedidos'];
+    if (!sheet) return { success: false };
+
+    const rows = await sheet.getRows();
+    const orderRow = rows.find(row => row.get('ID de pedido') === orderId);
+
+    if (!orderRow) return { success: false };
+
+    // Actualizar estado
+    orderRow.set('Estado', newStatus);
+    await orderRow.save();
+
+    // Obtener datos para el email
+    const email = orderRow.get('Email');
+    let customerName = 'Cliente';
+
+    // Intentar buscar el nombre del cliente
+    try {
+      if (email) {
+        const user = await findUserByEmail(email);
+        if (user) customerName = user.nombreCompleto;
+      }
+    } catch (e) {
+      console.warn('No se pudo obtener nombre del usuario para el email:', email);
+    }
+
+    return { success: true, email, customerName };
+  } catch (error) {
+    console.error("Error actualizando estado del pedido:", error);
+    return { success: false };
+  }
+}
 
 
 // Crear alerta de stock
