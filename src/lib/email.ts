@@ -1,3 +1,4 @@
+// Versión: 1.0.2 - Forzando actualización de variables de entorno en Vercel
 import nodemailer from 'nodemailer';
 
 // Versión: 1.0.1 - Actualizado para forzar lectura de variables nuevas
