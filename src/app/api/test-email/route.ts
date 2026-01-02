@@ -1,46 +1,31 @@
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
-    // Buscamos todas las variables que empiecen con EMAIL o SMTP para ver qué nombres "existen"
+export async function GET() {
     const allEnvKeys = Object.keys(process.env);
-    const emailRelatedKeys = allEnvKeys.filter(key => key.includes('EMAIL') || key.includes('SMTP'));
 
-    const user = process.env.SMTP_USER || process.env.EMAIL_USER || '';
-    const pass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD || '';
-
-    // MÁSCARA DE SEGURIDAD
-    const maskPass = (p: string) => {
-        if (!p) return 'VACÍA';
-        if (p.length < 4) return 'MUY CORTA';
-        return p.substring(0, 2) + '*'.repeat(p.length - 4) + p.substring(p.length - 2);
-    };
-
-    let smtpResult = "";
-    try {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: { user, pass },
-        });
-        await transporter.verify();
-        smtpResult = "CONEXION EXITOSA ✅";
-    } catch (e: any) {
-        smtpResult = "FALLO ❌: " + e.message;
-    }
+    // Filtramos para ver qué variables relacionadas con Vercel existen
+    const vercelVars = allEnvKeys.filter(key => key.includes('VERCEL'));
+    const emailVars = allEnvKeys.filter(key => key.includes('EMAIL') || key.includes('SMTP'));
 
     return NextResponse.json({
-        debug_version: "1.0.5-ENV-DETECTIVE",
-        variables_detectadas_en_vercel: emailRelatedKeys,
+        debug_version: "1.0.6-IDENTITY-TEST",
+        identidad_servidor: {
+            url_despliegue: process.env.VERCEL_URL || "No disponible",
+            entorno: process.env.VERCEL_ENV || "No disponible",
+            proyecto_id: process.env.VERCEL_PROJECT_ID ? "PRESENT-ID-OK" : "MISSING",
+            region: process.env.VERCEL_REGION || "No disponible"
+        },
+        variables_visibles: {
+            totales: allEnvKeys.length,
+            relacionadas_con_email: emailVars,
+            relacionadas_con_vercel: vercelVars
+        },
         configuracion_actual: {
             usando_smtp_user: !!process.env.SMTP_USER,
             usando_email_user: !!process.env.EMAIL_USER,
-            usuario_final: user,
-            longitud_pass: pass.length,
-            pass_mascara: maskPass(pass)
-        },
-        resultado_smtp: smtpResult,
-        sugerencia: emailRelatedKeys.length === 0 ? "Vercel no está inyectando NINGUNA variable. Revisa el entorno." : "Mira los nombres arriba para ver si hay errores de escritura."
+            usuario_final: process.env.SMTP_USER || process.env.EMAIL_USER || "VACÍO"
+        }
     });
 }
