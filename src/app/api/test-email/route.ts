@@ -21,12 +21,15 @@ export async function GET() {
     }
 
     return NextResponse.json({
-        debug_version: "1.0.7-HARDCODED-USER",
-        resultado_esperado: {
-            usuario_hardcodeado: user,
-            password_leida_de_vercel: pass ? "SI (longitud " + pass.length + ")" : "NO"
+        debug_version: "1.0.8-VAR-CHECK",
+        analisis_variables: {
+            SMTP_PASS_longitud: (process.env.SMTP_PASS || '').length,
+            EMAIL_PASSWORD_longitud: (process.env.EMAIL_PASSWORD || '').length,
+
+            // ¿Cuál está ganando?
+            ganadora: process.env.SMTP_PASS ? "SMTP_PASS" : (process.env.EMAIL_PASSWORD ? "EMAIL_PASSWORD" : "NINGUNA")
         },
         resultado_smtp: smtpResult,
-        nota: "Si aquí sigue fallando con BadCredentials, la contraseña de 16 caracteres en Vercel está mal escrita o tiene espacios."
+        nota: "Una App Password de Google DEBE tener 16 caracteres. Si alguna de arriba dice 10, esa es la que está arruinando la conexión."
     });
 }
