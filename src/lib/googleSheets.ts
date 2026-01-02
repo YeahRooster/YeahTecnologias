@@ -81,6 +81,7 @@ export interface User {
   nombreLocal: string;
   localidad: string;
   fechaRegistro: string;
+  habilitado: boolean;
 }
 
 // Interfaz para Pedido
@@ -135,7 +136,46 @@ export async function findUserByEmail(email: string): Promise<User | null> {
     nombreLocal: userRow.get('Nombre del local') || userRow.get('Nombre del Local') || userRow.get('NombreLocal') || '',
     localidad: userRow.get('Localidad') || '',
     fechaRegistro: userRow.get('Fecha de registro') || userRow.get('FechaRegistro') || '',
+    habilitado: (userRow.get('Habilitado') || '').toLowerCase() === 'si',
   };
+}
+
+// Obtener todos los usuarios (para admin)
+export async function getAllUsers(): Promise<User[]> {
+  const doc = await getDoc();
+  const sheet = doc.sheetsByTitle['Usuarios'];
+  if (!sheet) return [];
+
+  const rows = await sheet.getRows();
+  return rows.map(row => ({
+    email: row.get('Email') || '',
+    password: '',
+    nombreCompleto: row.get('Nombre') || row.get('NombreCompleto') || '',
+    domicilio: row.get('Domicilio') || '',
+    telefono: row.get('Telefono') || '',
+    cuitCuil: row.get('CUIT/CUIL') || row.get('CuitCuil') || '',
+    nombreLocal: row.get('Nombre del local') || row.get('NombreLocal') || '',
+    localidad: row.get('Localidad') || '',
+    fechaRegistro: row.get('Fecha de registro') || '',
+    habilitado: (row.get('Habilitado') || '').toLowerCase() === 'si',
+  }));
+}
+
+// Habilitar/Deshabilitar usuario
+export async function toggleUserStatus(email: string, enabled: boolean): Promise<boolean> {
+  const doc = await getDoc();
+  const sheet = doc.sheetsByTitle['Usuarios'];
+  if (!sheet) return false;
+
+  const rows = await sheet.getRows();
+  const userRow = rows.find(r => (r.get('Email') || '').toLowerCase() === email.toLowerCase());
+
+  if (userRow) {
+    userRow.set('Habilitado', enabled ? 'Si' : 'No');
+    await userRow.save();
+    return true;
+  }
+  return false;
 }
 
 // Registrar un nuevo usuario
@@ -164,9 +204,10 @@ export async function registerUser(userData: Omit<User, 'fechaRegistro'>): Promi
     'Localidad': userData.localidad,
     'CUIT/CUIL': userData.cuitCuil,
     'Nombre del local': userData.nombreLocal,
+    'Habilitado': 'No',
   });
 
-  return { ...userData, fechaRegistro };
+  return { ...userData, fechaRegistro, habilitado: false };
 }
 
 // Actualizar datos del usuario

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye } from 'lucide-react';
+import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye, Users, Check, ShieldAlert } from 'lucide-react';
 import styles from './admin.module.css';
 
 interface Order {
@@ -14,36 +14,42 @@ interface Order {
     estado: string;
 }
 
+interface UserAdmin {
+    email: string;
+    nombreCompleto: string;
+    nombreLocal: string;
+    cuitCuil: string;
+    habilitado: boolean;
+    fechaRegistro: string;
+}
+
 export default function AdminPage() {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios'>('pedidos');
+
+    // Estados para Pedidos
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterEstado, setFilterEstado] = useState('Todos');
-
-    // Estado para el modal de detalle
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [newStatus, setNewStatus] = useState('');
     const [updating, setUpdating] = useState(false);
     const [updateMessage, setUpdateMessage] = useState('');
 
-    useEffect(() => {
-        // Opcional: Recuperar sesión
-    }, []);
+    // Estados para Usuarios
+    const [users, setUsers] = useState<UserAdmin[]>([]);
+    const [loadingUsers, setLoadingUsers] = useState(false);
+    const [userSearchTerm, setUserSearchTerm] = useState('');
 
     const fetchOrders = async (pwd: string) => {
         setLoading(true);
         setError('');
         try {
-            // No cachear para ver cambios frescos
             const response = await fetch(`/api/admin?password=${encodeURIComponent(pwd)}`, { cache: 'no-store' });
-
-            if (!response.ok) {
-                throw new Error('Contraseña incorrecta');
-            }
-
+            if (!response.ok) throw new Error('Contraseña incorrecta');
             const data = await response.json();
             setOrders(data.orders);
             return true;
@@ -55,6 +61,27 @@ export default function AdminPage() {
         }
     };
 
+    const fetchUsers = async () => {
+        setLoadingUsers(true);
+        try {
+            const response = await fetch('/api/admin/users');
+            if (response.ok) {
+                const data = await response.json();
+                setUsers(data);
+            }
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        } finally {
+            setLoadingUsers(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isAuthenticated && activeTab === 'usuarios') {
+            fetchUsers();
+        }
+    }, [isAuthenticated, activeTab]);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         const success = await fetchOrders(password);
@@ -63,49 +90,34 @@ export default function AdminPage() {
         }
     };
 
-    const handleOrderClick = (order: Order) => {
-        setSelectedOrder(order);
-        setNewStatus(order.estado);
-        setUpdateMessage('');
+    const handleToggleUser = async (email: string, currentStatus: boolean) => {
+        try {
+            const response = await fetch('/api/admin/users', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, habilitado: !currentStatus })
+            });
+            if (response.ok) {
+                setUsers(users.map(u => u.email === email ? { ...u, habilitado: !currentStatus } : u));
+            }
+        } catch (error) {
+            alert('Error al actualizar usuario');
+        }
     };
 
     const handleUpdateStatus = async () => {
         if (!selectedOrder) return;
-
         setUpdating(true);
-        setUpdateMessage('');
-
         try {
             const response = await fetch('/api/admin', {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    orderId: selectedOrder.idPedido,
-                    status: newStatus,
-                    password: password
-                }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: selectedOrder.idPedido, status: newStatus, password })
             });
-
-            const data = await response.json();
-
             if (response.ok) {
-                setUpdateMessage('✅ Estado actualizado correctamente');
-                // Actualizar lista local
-                setOrders(orders.map(o =>
-                    o.idPedido === selectedOrder.idPedido ? { ...o, estado: newStatus } : o
-                ));
-                // Actualizar modal
-                setSelectedOrder({ ...selectedOrder, estado: newStatus });
-
-                // Cerrar modal después de 1.5s
-                setTimeout(() => {
-                    setSelectedOrder(null);
-                    setUpdateMessage('');
-                }, 1500);
-            } else {
-                setUpdateMessage(`❌ Error: ${data.error}`);
+                setUpdateMessage('✅ Estado actualizado');
+                setOrders(orders.map(o => o.idPedido === selectedOrder.idPedido ? { ...o, estado: newStatus } : o));
+                setTimeout(() => setSelectedOrder(null), 1500);
             }
         } catch (error) {
             setUpdateMessage('❌ Error de conexión');
@@ -114,68 +126,28 @@ export default function AdminPage() {
         }
     };
 
-    const filteredOrders = orders.filter(order => {
-        const matchesSearch =
-            order.idPedido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            order.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            order.productos.toLowerCase().includes(searchTerm.toLowerCase());
+    // Filtrados
+    const filteredOrders = orders.filter(o =>
+        (o.idPedido.toLowerCase().includes(searchTerm.toLowerCase()) || o.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (filterEstado === 'Todos' || o.estado === filterEstado)
+    );
 
-        const matchesEstado = filterEstado === 'Todos' || order.estado === filterEstado;
-
-        return matchesSearch && matchesEstado;
-    });
-
-    // Métricas calculadas
-    const ordersNotCancelled = orders.filter(o => o.estado !== 'Cancelado');
-    const totalVentas = ordersNotCancelled.reduce((sum, order) => sum + order.total, 0);
-    const ticketPromedio = ordersNotCancelled.length > 0 ? totalVentas / ordersNotCancelled.length : 0;
-
-    // Productos más vendidos
-    const productSales: { [key: string]: number } = {};
-    orders.forEach(order => {
-        if (order.estado === 'Cancelado') return;
-        const items = order.productos.split(';');
-        items.forEach(item => {
-            const match = item.match(/(.+)\s\(x(\d+)\)/);
-            if (match) {
-                const productName = match[1].trim();
-                const quantity = parseInt(match[2]);
-                productSales[productName] = (productSales[productName] || 0) + quantity;
-            }
-        });
-    });
-    const topProducts = Object.entries(productSales)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
-
-    // Pedidos por estado
-    const ordersByStatus = {
-        Pendiente: orders.filter(o => o.estado === 'Pendiente').length,
-        Preparado: orders.filter(o => o.estado === 'Preparado').length,
-        Entregado: orders.filter(o => o.estado === 'Entregado').length,
-        Cancelado: orders.filter(o => o.estado === 'Cancelado').length,
-    };
-
-    const estados = ['Todos', 'Pendiente', 'Preparado', 'Entregado', 'Cancelado'];
+    const filteredUsers = users.filter(u =>
+        u.email.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+        u.nombreCompleto.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+        u.nombreLocal.toLowerCase().includes(userSearchTerm.toLowerCase())
+    );
 
     if (!isAuthenticated) {
         return (
             <div className={styles.loginContainer}>
                 <div className={styles.loginCard}>
-                    <h1>🔐 Panel de Administrador</h1>
-                    <p>Yeah! Tecnologías</p>
+                    <h1>🔐 Panel Admin</h1>
+                    <p>Acceso restringido</p>
                     {error && <div className={styles.error}>{error}</div>}
                     <form onSubmit={handleLogin} className={styles.loginForm}>
-                        <input
-                            type="password"
-                            placeholder="Contraseña de administrador"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                        <button type="submit" disabled={loading}>
-                            {loading ? 'Verificando...' : 'Ingresar'}
-                        </button>
+                        <input type="password" placeholder="Contraseña" value={password} onChange={e => setPassword(e.target.value)} required />
+                        <button type="submit" disabled={loading}>{loading ? 'Verificando...' : 'Ingresar'}</button>
                     </form>
                 </div>
             </div>
@@ -185,206 +157,146 @@ export default function AdminPage() {
     return (
         <div className="container" style={{ padding: '2rem 1rem' }}>
             <div className={styles.header}>
-                <h1>📊 Panel de Administrador</h1>
-                <button onClick={() => setIsAuthenticated(false)} className={styles.logoutBtn}>
-                    Cerrar Sesión
-                </button>
-            </div>
-
-            {/* DASHBOARD DE MÉTRICAS */}
-            <div className={styles.statsGrid}>
-                {/* ... (Métricas igual que antes) ... */}
-                <div className={styles.statCard}>
-                    <Package size={32} />
-                    <div>
-                        <h3>Total Pedidos</h3>
-                        <p className={styles.statNumber}>{orders.length}</p>
-                        <span className={styles.statSubtext}>
-                            {ordersByStatus.Cancelado} cancelados
-                        </span>
-                    </div>
-                </div>
-                <div className={styles.statCard}>
-                    <div>💰</div>
-                    <div>
-                        <h3>Ventas Totales</h3>
-                        <p className={styles.statNumber}>${totalVentas.toLocaleString('es-AR')}</p>
-                        <span className={styles.statSubtext}>
-                            Excluyendo cancelados
-                        </span>
-                    </div>
-                </div>
-                <div className={styles.statCard}>
-                    <div>📈</div>
-                    <div>
-                        <h3>Ticket Promedio</h3>
-                        <p className={styles.statNumber}>${ticketPromedio.toLocaleString('es-AR', { maximumFractionDigits: 0 })}</p>
-                        <span className={styles.statSubtext}>
-                            Por pedido
-                        </span>
-                    </div>
-                </div>
-                <div className={styles.statCard}>
-                    <div>✅</div>
-                    <div>
-                        <h3>Pedidos Entregados</h3>
-                        <p className={styles.statNumber}>{ordersByStatus.Entregado}</p>
-                        <span className={styles.statSubtext}>
-                            {ordersByStatus.Preparado} preparados
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* CONTROL DE BÚSQUEDA Y FILTROS */}
-            <div className={styles.controls}>
-                <div className={styles.searchBar}>
-                    <Search size={20} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por pedido, email o producto..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <div className={styles.filters}>
-                    {estados.map(estado => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <h1>📊 Panel Admin</h1>
+                    <nav className={styles.adminTabs}>
                         <button
-                            key={estado}
-                            onClick={() => setFilterEstado(estado)}
-                            className={filterEstado === estado ? styles.activeFilter : ''}
+                            className={`${styles.tabBtn} ${activeTab === 'pedidos' ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab('pedidos')}
                         >
-                            {estado}
+                            <Package size={18} /> Pedidos
                         </button>
-                    ))}
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === 'usuarios' ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab('usuarios')}
+                        >
+                            <Users size={18} /> Usuarios
+                        </button>
+                    </nav>
                 </div>
+                <button onClick={() => setIsAuthenticated(false)} className={styles.logoutBtn}>Cerrar Sesión</button>
             </div>
 
-            {/* TABLA DE PEDIDOS */}
-            <div className={styles.ordersTable}>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID Pedido</th>
-                            <th>Fecha</th>
-                            <th>Cliente</th>
-                            <th>Total</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredOrders.map(order => (
-                            <tr key={order.idPedido} onClick={() => handleOrderClick(order)}>
-                                <td><strong>{order.idPedido}</strong></td>
-                                <td>{order.fecha}</td>
-                                <td>{order.email}</td>
-                                <td><strong>${order.total.toLocaleString('es-AR')}</strong></td>
-                                <td>
-                                    <span className={`${styles.badge} ${styles[order.estado.toLowerCase()] || styles.pendiente}`}>
-                                        {order.estado}
-                                    </span>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {filteredOrders.length === 0 && (
-                    <div className={styles.noResults}>
-                        <Package size={48} />
-                        <p>No hay pedidos que coincidan con tu búsqueda</p>
+            {activeTab === 'pedidos' ? (
+                <>
+                    {/* Búsqueda y Filtros Pedidos */}
+                    <div className={styles.controls}>
+                        <div className={styles.searchBar}>
+                            <Search size={20} />
+                            <input type="text" placeholder="Buscar pedidos..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                        </div>
+                        <div className={styles.filters}>
+                            {['Todos', 'Pendiente', 'Preparado', 'Entregado', 'Cancelado'].map(e => (
+                                <button key={e} onClick={() => setFilterEstado(e)} className={filterEstado === e ? styles.activeFilter : ''}>{e}</button>
+                            ))}
+                        </div>
                     </div>
-                )}
-            </div>
 
-            {/* MODAL DE DETALLES */}
+                    {/* Tabla de Pedidos */}
+                    <div className={styles.ordersTable}>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredOrders.map(o => (
+                                    <tr key={o.idPedido} onClick={() => { setSelectedOrder(o); setNewStatus(o.estado); }}>
+                                        <td><strong>{o.idPedido}</strong></td>
+                                        <td>{o.fecha}</td>
+                                        <td>{o.email}</td>
+                                        <td><strong>${o.total.toLocaleString('es-AR')}</strong></td>
+                                        <td><span className={`${styles.badge} ${styles[o.estado.toLowerCase()]}`}>{o.estado}</span></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+            ) : (
+                <>
+                    {/* Búsqueda Usuarios */}
+                    <div className={styles.controls}>
+                        <div className={styles.searchBar}>
+                            <Search size={20} />
+                            <input type="text" placeholder="Buscar por email, nombre o local..." value={userSearchTerm} onChange={e => setUserSearchTerm(e.target.value)} />
+                        </div>
+                    </div>
+
+                    {/* Tabla de Usuarios */}
+                    <div className={styles.ordersTable}>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cliente / Local</th>
+                                    <th>Email</th>
+                                    <th>CUIT/CUIL</th>
+                                    <th>Registrado</th>
+                                    <th>Acceso Mayorista</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loadingUsers ? (
+                                    <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Cargando usuarios...</td></tr>
+                                ) : filteredUsers.map(u => (
+                                    <tr key={u.email}>
+                                        <td>
+                                            <div style={{ fontWeight: 'bold' }}>{u.nombreCompleto}</div>
+                                            <div style={{ fontSize: '0.85rem', color: '#666' }}>{u.nombreLocal}</div>
+                                        </td>
+                                        <td>{u.email}</td>
+                                        <td>{u.cuitCuil}</td>
+                                        <td>{u.fechaRegistro}</td>
+                                        <td>
+                                            <button
+                                                onClick={() => handleToggleUser(u.email, u.habilitado)}
+                                                className={u.habilitado ? styles.btnHabilitado : styles.btnDeshabilitado}
+                                            >
+                                                {u.habilitado ? <><Check size={16} /> Habilitado</> : <><ShieldAlert size={16} /> Habilitar</>}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+            )}
+
+            {/* MODAL PEDIDO (Mismo que antes) */}
             {selectedOrder && (
                 <div className={styles.modalOverlay} onClick={() => setSelectedOrder(null)}>
                     <div className={styles.modal} onClick={e => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
-                            <div>
-                                <h2>Pedido {selectedOrder.idPedido}</h2>
-                                <span className={styles.dateInfo}>{selectedOrder.fecha}</span>
-                            </div>
+                            <h2>Detalle Pedido {selectedOrder.idPedido}</h2>
                             <div style={{ display: 'flex', gap: '10px' }}>
-                                <a
-                                    href={`/comprobante/${selectedOrder.idPedido}`}
-                                    target="_blank"
-                                    style={{
-                                        display: 'flex', alignItems: 'center', gap: '5px',
-                                        padding: '5px 10px', borderRadius: '5px',
-                                        backgroundColor: 'white', border: '1px solid #ddd', textDecoration: 'none', color: '#333',
-                                        fontSize: '0.9rem', fontWeight: 600
-                                    }}
-                                >
-                                    <Eye size={18} /> Ver Remito
-                                </a>
-                                <a
-                                    href={`/comprobante/${selectedOrder.idPedido}`}
-                                    target="_blank"
-                                    style={{
-                                        display: 'flex', alignItems: 'center', gap: '5px',
-                                        padding: '5px 10px', borderRadius: '5px',
-                                        backgroundColor: '#4f46e5', textDecoration: 'none', color: 'white',
-                                        fontSize: '0.9rem', fontWeight: 600
-                                    }}
-                                >
-                                    <Printer size={18} /> Imprimir
-                                </a>
-                                <button className={styles.closeBtn} onClick={() => setSelectedOrder(null)}>
-                                    <X size={24} />
-                                </button>
+                                <a href={`/comprobante/${selectedOrder.idPedido}`} target="_blank" className={styles.viewBtn}><Eye size={18} /> Ver Remito</a>
+                                <button className={styles.closeBtn} onClick={() => setSelectedOrder(null)}><X size={24} /></button>
                             </div>
                         </div>
-
                         <div className={styles.modalContent}>
-                            <div className={styles.detailSection}>
-                                <h3>Datos del Cliente</h3>
-                                <p><strong>Email:</strong> {selectedOrder.email}</p>
+                            <p><strong>Cliente:</strong> {selectedOrder.email}</p>
+                            <p><strong>Productos:</strong></p>
+                            <div className={styles.miniProductList}>
+                                {selectedOrder.productos.split(';').map((p, i) => <div key={i}>{p}</div>)}
                             </div>
-
-                            <div className={styles.detailSection}>
-                                <h3>Productos</h3>
-                                <div className={styles.productList}>
-                                    {selectedOrder.productos.split(';').map((prod, i) => (
-                                        <div key={i} className={styles.productItem}>
-                                            <span>{prod}</span>
-                                        </div>
-                                    ))}
-                                    <div className={styles.productItem} style={{ marginTop: '10px', fontWeight: 'bold' }}>
-                                        <span>Total:</span>
-                                        <span>${selectedOrder.total.toLocaleString('es-AR')}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className={styles.detailSection}>
-                                <h3>Gestión de Estado</h3>
-                                <div className={styles.statusControl}>
-                                    <select
-                                        value={newStatus}
-                                        onChange={(e) => setNewStatus(e.target.value)}
-                                        className={styles.statusSelect}
-                                    >
+                            <div style={{ marginTop: '20px' }}>
+                                <h3>Cambiar Estado</h3>
+                                <div className={styles.statusRow}>
+                                    <select value={newStatus} onChange={e => setNewStatus(e.target.value)} className={styles.statusSelect}>
                                         <option value="Pendiente">Pendiente</option>
                                         <option value="Preparado">Preparado</option>
                                         <option value="Entregado">Entregado</option>
                                         <option value="Cancelado">Cancelado</option>
                                     </select>
-                                    <button
-                                        onClick={handleUpdateStatus}
-                                        className={styles.updateBtn}
-                                        disabled={updating || newStatus === selectedOrder.estado}
-                                    >
-                                        {updating ? 'Guardando...' : 'Actualizar Estado'}
-                                    </button>
+                                    <button onClick={handleUpdateStatus} className={styles.updateBtn} disabled={updating}>{updating ? '...' : 'Actualizar'}</button>
                                 </div>
-                                {updateMessage && <p className={styles.message}>{updateMessage}</p>}
-                                {newStatus === 'Cancelado' && selectedOrder.estado !== 'Cancelado' && (
-                                    <div className={styles.warningBox}>
-                                        <AlertTriangle size={20} />
-                                        <p>Atención: Al cancelar el pedido, el stock de los productos se restituirá automáticamente.</p>
-                                    </div>
-                                )}
+                                {updateMessage && <p>{updateMessage}</p>}
                             </div>
                         </div>
                     </div>

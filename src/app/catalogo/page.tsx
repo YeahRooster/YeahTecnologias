@@ -4,20 +4,16 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductCard from "@/components/ProductCard";
 import ProductModal from "@/components/ProductModal";
-import { Filter, Loader2, X } from "lucide-react";
+import { Filter, Loader2, X, Lock } from "lucide-react";
 
 interface Product {
     id: string;
-    nombre: string;
-    name: string; // Compatibilidad
+    name: string;
     description: string;
-    precio: number;
-    price: number; // Compatibilidad
-    stock: boolean;
-    imagen: string;
-    image: string; // Compatibilidad
+    price: number;
+    stock: number;
+    image: string;
     category: string;
-    categoria: string; // Compatibilidad
 }
 
 function CatalogContent() {
@@ -35,21 +31,49 @@ function CatalogContent() {
     // Estado para el Modal
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
+    // Estado de Autorización (para ver precios)
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    const [userStatus, setUserStatus] = useState<'guest' | 'pending' | 'active'>('guest');
+
+    useEffect(() => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user.habilitado) {
+                    setIsAuthorized(true);
+                    setUserStatus('active');
+                } else {
+                    setIsAuthorized(false);
+                    setUserStatus('pending');
+                }
+            } catch (e) {
+                setIsAuthorized(false);
+                setUserStatus('guest');
+            }
+        } else {
+            setIsAuthorized(false);
+            setUserStatus('guest');
+        }
+    }, []);
+
     useEffect(() => {
         async function fetchProducts() {
+            setLoading(true);
             try {
                 const response = await fetch('/api/products');
                 if (!response.ok) throw new Error('Error al cargar productos');
                 const data = await response.json();
 
-                // Normalizar datos para asegurar compatibilidad entre español (Google Sheets) e inglés (UI)
+                // Normalizar datos
                 const normalizedData = data.map((item: any) => ({
-                    ...item,
-                    name: item.nombre || item.name,
-                    price: item.precio || item.price,
-                    image: item.imagen || item.image,
-                    category: item.categoria || item.category,
-                    stock: item.stock
+                    id: item.id || '',
+                    name: item.nombre || item.name || '',
+                    description: item.descripcion || item.description || '',
+                    price: parseFloat(item.precio || item.price || '0'),
+                    image: item.imagen || item.image || item.imageUrl || '',
+                    category: item.categoria || item.category || '',
+                    stock: parseInt(item.stock !== undefined ? item.stock : '100')
                 }));
 
                 setProducts(normalizedData.reverse());
@@ -64,7 +88,7 @@ function CatalogContent() {
         fetchProducts();
     }, []);
 
-    // Obtener categorías únicas (soportando múltiples separadas por coma)
+    // Categorías únicas
     const allCategories = products
         .map(p => p.category)
         .filter(Boolean)
@@ -72,144 +96,122 @@ function CatalogContent() {
 
     const categories = ['Todas', ...Array.from(new Set(allCategories))].sort();
 
-    // Filtrar productos
+    // Filtros
     let filteredProducts = products.filter(p => {
-        // Categoría
         const productCategories = p.category ? p.category.split(',').map(c => c.trim()) : [];
         const matchesCategory = selectedCategory === 'Todas' || productCategories.includes(selectedCategory);
 
-        // Búsqueda
         const matchesSearch = !searchQuery ||
             p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            p.category.toLowerCase().includes(searchQuery.toLowerCase());
+            p.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-        // Precio
         const matchesMinPrice = minPrice === '' || p.price >= minPrice;
         const matchesMaxPrice = maxPrice === '' || p.price <= maxPrice;
 
         return matchesCategory && matchesSearch && matchesMinPrice && matchesMaxPrice;
     });
 
-    // Ordenar
-    if (sortOrder === 'asc') {
-        filteredProducts.sort((a, b) => a.price - b.price);
-    } else if (sortOrder === 'desc') {
-        filteredProducts.sort((a, b) => b.price - a.price);
-    }
+    if (sortOrder === 'asc') filteredProducts.sort((a, b) => a.price - b.price);
+    if (sortOrder === 'desc') filteredProducts.sort((a, b) => b.price - a.price);
 
-    if (loading) {
-        return (
-            <div className="container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
-                <Loader2 size={48} style={{ animation: 'spin 1s linear infinite' }} />
-                <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Cargando productos...</p>
-                <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
-                <p style={{ color: 'var(--error)' }}>{error}</p>
-            </div>
-        );
-    }
+    if (loading) return (
+        <div className="container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
+            <Loader2 size={48} className="spin" />
+            <p style={{ marginTop: '1rem', color: '#64748b' }}>Cargando catálogo...</p>
+            <style>{`.spin { animation: spin 1s linear infinite; } @keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+        </div>
+    );
 
     return (
         <div className="container" style={{ padding: '2rem 1rem' }}>
-            {/* Header del Catálogo */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                    <h1 className="section-title" style={{ margin: 0, textAlign: 'left' }}>
-                        {searchQuery ? `Resultados para "${searchQuery}"` : 'Catálogo Completo'}
-                    </h1>
-                    {searchQuery && (
-                        <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                            {filteredProducts.length} producto{filteredProducts.length !== 1 ? 's' : ''} encontrado{filteredProducts.length !== 1 ? 's' : ''}
-                        </p>
-                    )}
-                </div>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                    {!searchQuery && `${filteredProducts.length} productos encontrados`}
-                </p>
+
+            {/* Header */}
+            <div style={{ marginBottom: '2rem' }}>
+                <h1 className="section-title" style={{ textAlign: 'left', marginBottom: '0.5rem' }}>
+                    {searchQuery ? `Búsqueda: "${searchQuery}"` : 'Catálogo Mayorista'}
+                </h1>
+                <p style={{ color: '#64748b' }}>{filteredProducts.length} productos disponibles</p>
             </div>
 
-            {/* BARRA DE HERRAMIENTAS DE FILTRO */}
+            {/* BANNER DE ACCESO */}
+            {!isAuthorized && (
+                <div style={{
+                    background: userStatus === 'pending'
+                        ? 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)'
+                        : 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                    border: `1px solid ${userStatus === 'pending' ? '#fde68a' : '#bae6fd'}`,
+                    padding: '2rem',
+                    borderRadius: '1rem',
+                    marginBottom: '2rem',
+                    textAlign: 'center',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                }}>
+                    {userStatus === 'pending' ? (
+                        <>
+                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⌛</div>
+                            <h2 style={{ color: '#92400e', marginBottom: '0.5rem' }}>Cuenta en Proceso de Aprobación</h2>
+                            <p style={{ color: '#b45309', maxWidth: '600px', margin: '0 auto 1.5rem auto' }}>
+                                ¡Gracias por registrarte! Un administrador está revisando tus datos.
+                                En breve recibirás un email confirmando la habilitación para ver precios y comprar.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏢</div>
+                            <h2 style={{ color: '#075985', marginBottom: '0.5rem' }}>Precios Exclusivos Mayoristas</h2>
+                            <p style={{ color: '#0369a1', maxWidth: '600px', margin: '0 auto 1.5rem auto' }}>
+                                Solo los clientes habilitados pueden ver nuestra lista de precios y realizar pedidos online.
+                            </p>
+                            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                                <a href="/cuenta" style={{
+                                    background: '#4f46e5', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 600, textDecoration: 'none'
+                                }}>Ingresar</a>
+                                <a href="/cuenta" style={{
+                                    background: 'white', color: '#4f46e5', border: '1px solid #4f46e5', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 600, textDecoration: 'none'
+                                }}>Registrarme</a>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* BARRA DE FILTROS */}
             <div style={{
                 marginBottom: '2rem',
                 backgroundColor: '#f8fafc',
                 padding: '1.5rem',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border)',
+                borderRadius: '1rem',
+                border: '1px solid #e2e8f0',
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: '1.5rem',
-                alignItems: 'flex-end'
+                gap: '1.5rem'
             }}>
-                {/* Categoría */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Categoría</label>
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Categoría</label>
                     <select
                         value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        style={{
-                            padding: '0.6rem 2.5rem 0.6rem 1rem',
-                            borderRadius: 'var(--radius-md)',
-                            border: '1px solid var(--border)',
-                            backgroundColor: 'white',
-                            cursor: 'pointer',
-                            minWidth: '200px',
-                            backgroundRepeat: 'no-repeat',
-                            backgroundPosition: 'right 0.5rem center',
-                            backgroundSize: '1.25rem',
-                            appearance: 'none',
-                            borderRight: '10px solid transparent' // Hack simple para flecha
-                        }}
+                        onChange={e => setSelectedCategory(e.target.value)}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1' }}
                     >
-                        {categories.map((cat) => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
+                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
-
-                {/* Precio */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Rango de Precio</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <input
-                            type="number"
-                            placeholder="Mín"
-                            value={minPrice}
-                            onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : '')}
-                            style={{ width: '100px', padding: '0.6rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
-                        />
-                        <span style={{ color: 'var(--text-secondary)' }}>-</span>
-                        <input
-                            type="number"
-                            placeholder="Máx"
-                            value={maxPrice}
-                            onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : '')}
-                            style={{ width: '100px', padding: '0.6rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
-                        />
+                {isAuthorized && (
+                    <div style={{ flex: '1.5', minWidth: '250px' }}>
+                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Rango de Precio</label>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <input type="number" placeholder="Mín" value={minPrice} onChange={e => setMinPrice(e.target.value ? Number(e.target.value) : '')} style={{ width: '100%', padding: '0.6rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1' }} />
+                            <span>-</span>
+                            <input type="number" placeholder="Máx" value={maxPrice} onChange={e => setMaxPrice(e.target.value ? Number(e.target.value) : '')} style={{ width: '100%', padding: '0.6rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1' }} />
+                        </div>
                     </div>
-                </div>
-
-                {/* Ordenar */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Ordenar por</label>
+                )}
+                <div style={{ flex: '1', minWidth: '180px' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Orden</label>
                     <select
                         value={sortOrder}
-                        onChange={(e) => setSortOrder(e.target.value as any)}
-                        style={{
-                            padding: '0.6rem 2.5rem 0.6rem 1rem',
-                            borderRadius: 'var(--radius-md)',
-                            border: '1px solid var(--border)',
-                            backgroundColor: 'white',
-                            cursor: 'pointer',
-                            minWidth: '180px',
-                            appearance: 'none'
-                        }}
+                        onChange={e => setSortOrder(e.target.value as any)}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1' }}
                     >
                         <option value="default">Relevancia</option>
                         <option value="asc">Menor Precio</option>
@@ -218,50 +220,32 @@ function CatalogContent() {
                 </div>
             </div>
 
-            {/* GRID DE PRODUCTOS */}
+            {/* PRODUCTOS */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                 gap: '2rem'
             }}>
-                {filteredProducts.map((product) => (
-                    <div
-                        key={product.id}
-                        onClick={() => setSelectedProduct(product)}
-                        style={{ cursor: 'pointer' }}
-                        title="Clic para ver detalles"
-                    >
-                        <ProductCard product={{
-                            ...product,
-                            name: product.name,
-                            price: product.price,
-                            image: product.image,
-                            category: product.category,
-                            stock: typeof product.stock === 'number' ? product.stock : (product.stock ? 9999 : 0)
-                        }} />
+                {filteredProducts.map(product => (
+                    <div key={product.id} onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
+                        <ProductCard product={product} isAuthorized={isAuthorized} />
                     </div>
                 ))}
             </div>
 
             {/* EMPTY STATE */}
             {filteredProducts.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                    <p>No hay productos que coincidan con tu búsqueda.</p>
-                    {searchQuery && (
-                        <p style={{ marginTop: '1rem' }}>
-                            <a href="/catalogo" style={{ color: 'var(--accent)', fontWeight: 600 }}>
-                                Ver todos los productos
-                            </a>
-                        </p>
-                    )}
+                <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
+                    <p style={{ fontSize: '1.2rem' }}>No se encontraron productos con estos filtros.</p>
                 </div>
             )}
 
-            {/* MODAL DE DETALLE */}
+            {/* MODAL */}
             {selectedProduct && (
                 <ProductModal
                     product={selectedProduct}
                     onClose={() => setSelectedProduct(null)}
+                    isAuthorized={isAuthorized}
                 />
             )}
         </div>
@@ -270,13 +254,7 @@ function CatalogContent() {
 
 export default function CatalogPage() {
     return (
-        <Suspense fallback={
-            <div className="container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
-                <Loader2 size={48} style={{ animation: 'spin 1s linear infinite' }} />
-                <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Cargando...</p>
-                <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-            </div>
-        }>
+        <Suspense fallback={<div style={{ textAlign: 'center', padding: '5rem' }}>Cargando catálogo...</div>}>
             <CatalogContent />
         </Suspense>
     );

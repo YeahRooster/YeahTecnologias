@@ -14,6 +14,7 @@ interface UserData {
     nombreLocal: string;
     localidad: string;
     fechaRegistro: string;
+    habilitado: boolean;
 }
 
 interface Order {
@@ -64,6 +65,8 @@ export default function CuentaPage() {
             if (response.ok) {
                 setUser(data.user);
                 setOrders(data.orders || []);
+                // Sincronizar localStorage con el estado más reciente de Google Sheets
+                localStorage.setItem('user', JSON.stringify(data.user));
             } else {
                 console.error('Error en respuesta:', data);
             }
@@ -287,6 +290,13 @@ export default function CuentaPage() {
                         <div className={styles.infoGroup}>
                             <label>Fecha de Registro</label>
                             <p>{user.fechaRegistro}</p>
+                        </div>
+
+                        <div className={styles.infoGroup}>
+                            <label>Estado de Acceso Mayorista</label>
+                            <span className={user.habilitado ? styles.statusActive : styles.statusPending}>
+                                {user.habilitado ? '✅ Habilitado (Puedes ver precios)' : '⌛ Pendiente de Aprobación'}
+                            </span>
                         </div>
                     </div>
                 </div>

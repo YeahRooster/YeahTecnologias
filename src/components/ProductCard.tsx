@@ -17,9 +17,10 @@ interface Product {
 
 interface ProductCardProps {
     product: Product;
+    isAuthorized?: boolean;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, isAuthorized = false }: ProductCardProps) {
     const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(1);
     const [added, setAdded] = useState(false);
@@ -83,10 +84,17 @@ export default function ProductCard({ product }: ProductCardProps) {
 
 
                 <div className={styles.priceRow}>
-                    <span className={styles.price}>${product.price.toLocaleString('es-AR')}</span>
+                    {isAuthorized ? (
+                        <span className={styles.price}>${product.price.toLocaleString('es-AR')}</span>
+                    ) : (
+                        <div className={styles.lockedPrice}>
+                            <span className={styles.blurredPrice}>$ 00.000,00</span>
+                            <p className={styles.lockText}>Logueate para ver precios</p>
+                        </div>
+                    )}
                 </div>
 
-                {!outOfStock && (
+                {isAuthorized && !outOfStock && (
                     <div className={styles.actions}>
                         <div className={styles.quantitySelector}>
                             <button

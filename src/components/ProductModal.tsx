@@ -1,195 +1,154 @@
 'use client';
 
-import { useState } from 'react';
-import { X, ShoppingCart, ChevronRight, ChevronLeft, Plus, Minus } from 'lucide-react';
-import { useCart } from '@/context/CartContext';
-import styles from './ProductModal.module.css';
+import { useState, useEffect } from 'react';
+import { ShoppingCart, Plus, Minus, Check, X, Bell } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import styles from "./ProductModal.module.css";
 
 interface Product {
     id: string;
-    nombre?: string;
-    name?: string;
-    precio?: number;
-    price?: number;
-    categoria?: string;
-    category?: string;
-    imagen?: string;
+    name: string;
+    price: number;
     image?: string;
-    stock: boolean | number;
-    descripcion?: string;
+    category: string;
+    stock?: number;
     description?: string;
 }
 
 interface ProductModalProps {
     product: Product;
     onClose: () => void;
+    isAuthorized?: boolean;
 }
 
-export default function ProductModal({ product, onClose }: ProductModalProps) {
+export default function ProductModal({ product, onClose, isAuthorized = false }: ProductModalProps) {
     const { addToCart } = useCart();
-
-    // Normalizar datos (compatibilidad Español/Inglés)
-    const productName = product.nombre || product.name || 'Producto sin nombre';
-    const productPrice = product.precio || product.price || 0;
-    const productCategory = product.categoria || product.category || 'General';
-    const productImage = product.imagen || product.image || '';
-
-    const productDescription = product.descripcion || product.description ||
-        "Haz clic en agregar para sumar este producto a tu pedido. Recuerda que los precios finales se confirman al cerrar la compra dependiendo la cotización del día.";
-
-    // Lógica mágica: Separar las imágenes por coma
-    const images = productImage
-        ? productImage.split(',').map(url => url.trim()).filter(Boolean)
-        : ['/placeholder.png'];
-
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [quantity, setQuantity] = useState(1);
+    const [added, setAdded] = useState(false);
 
-    // Determinar stock máximo (si es booleano true -> 9999, si es número -> ese número)
-    const maxStock = typeof product.stock === 'number' ? product.stock : (product.stock ? 9999 : 0);
-
-    const handleNextImage = () => {
-        setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    };
-
-    const handlePrevImage = () => {
-        setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-    };
-
-    const handleQuantityChange = (delta: number) => {
-        const newQty = quantity + delta;
-        if (newQty >= 1 && newQty <= maxStock) {
-            setQuantity(newQty);
-        }
-    };
+    const maxStock = product.stock || 0;
+    const outOfStock = maxStock <= 0;
 
     const handleAddToCart = () => {
-        if (productPrice <= 0) {
-            alert("Error: Precio no válido");
-            return;
-        }
+        if (outOfStock) return;
 
         addToCart({
             id: product.id,
-            name: productName,
-            price: productPrice,
-            image: images[0],
-            quantity: quantity,
-            maxStock: maxStock
-        });
-        // Opcional: Cerrar modal al agregar
-        onClose();
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            maxStock: maxStock,
+        }, quantity);
+
+        setAdded(true);
+        setTimeout(() => {
+            setAdded(false);
+        }, 1500);
     };
 
-    // Cerrar si se clickea fuera del contenido (el fondo oscuro)
-    const handleBackdropClick = (e: React.MouseEvent) => {
-        if (e.target === e.currentTarget) onClose();
-    };
+    // Cerrar con Escape
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [onClose]);
 
     return (
-        <div className={styles.backdrop} onClick={handleBackdropClick}>
-            <div className={styles.modalContent}>
-                <button className={styles.closeButton} onClick={onClose} aria-label="Cerrar">
+        <div className={styles.overlay} onClick={onClose}>
+            <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                <button className={styles.closeBtn} onClick={onClose}>
                     <X size={24} />
                 </button>
 
                 <div className={styles.grid}>
-                    {/* GALERÍA DE IMÁGENES */}
-                    <div className={styles.gallerySection}>
-                        <div className={styles.mainImageContainer}>
-                            <img
-                                src={images[currentImageIndex]}
-                                alt={productName}
-                                className={styles.mainImage}
-                            />
-                            {images.length > 1 && (
-                                <>
-                                    <button onClick={handlePrevImage} className={`${styles.navBtn} ${styles.prevBtn}`}>
-                                        <ChevronLeft size={20} />
-                                    </button>
-                                    <button onClick={handleNextImage} className={`${styles.navBtn} ${styles.nextBtn}`}>
-                                        <ChevronRight size={20} />
-                                    </button>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Miniaturas */}
-                        {images.length > 1 && (
-                            <div className={styles.thumbnails}>
-                                {images.map((img, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setCurrentImageIndex(idx)}
-                                        className={`${styles.thumbBtn} ${currentImageIndex === idx ? styles.activeThumb : ''}`}
-                                    >
-                                        <img src={img} alt={`Vista ${idx + 1}`} />
-                                    </button>
-                                ))}
-                            </div>
+                    <div className={styles.imageSection}>
+                        {product.image ? (
+                            <img src={product.image} alt={product.name} className={styles.mainImage} />
+                        ) : (
+                            <div className={styles.placeholder}>Sin Imagen</div>
                         )}
                     </div>
 
-                    {/* DATOS DEL PRODUCTO */}
                     <div className={styles.infoSection}>
-                        <span className={styles.categoryBadge}>{productCategory}</span>
-                        <h2 className={styles.title}>{productName}</h2>
+                        <div className={styles.category}>{product.category}</div>
+                        <h2 className={styles.title}>{product.name}</h2>
 
-                        <div className={styles.priceRow}>
-                            <span className={styles.currency}>$</span>
-                            <span className={styles.price}>{productPrice.toLocaleString('es-AR')}</span>
+                        {isAuthorized ? (
+                            <div className={styles.price}>${product.price.toLocaleString('es-AR')}</div>
+                        ) : (
+                            <div className={styles.lockedPriceMain}>
+                                <span className={styles.blurredPriceLarge}>$ 00.000,00</span>
+                                <div className={styles.lockNotice}>
+                                    🔒 Debes estar logueado y habilitado por el administrador para ver precios mayoristas.
+                                </div>
+                            </div>
+                        )}
+
+                        <div className={styles.description}>
+                            {product.description || 'Sin descripción disponible.'}
                         </div>
 
-                        <div className={styles.statusRow}>
-                            {product.stock ? (
-                                <span className={styles.inStock}>✅ Disponible en stock</span>
-                            ) : (
-                                <span className={styles.noStock}>❌ Sin stock momentáneo</span>
-                            )}
-                        </div>
+                        {product.stock !== undefined && isAuthorized && (
+                            <div className={styles.stockInfo}>
+                                Stock disponible: <span className={product.stock > 0 ? styles.inStock : styles.noStock}>
+                                    {product.stock > 0 ? product.stock : 'Agotado'}
+                                </span>
+                            </div>
+                        )}
 
-                        <p className={styles.description}>
-                            {productDescription}
-                        </p>
+                        {isAuthorized && !outOfStock && (
+                            <div className={styles.actions}>
+                                <div className={styles.quantitySelector}>
+                                    <button
+                                        onClick={() => quantity > 1 && setQuantity(quantity - 1)}
+                                        className={styles.qtyBtn}
+                                        disabled={quantity <= 1}
+                                    >
+                                        <Minus size={20} />
+                                    </button>
+                                    <span className={styles.qtyValue}>{quantity}</span>
+                                    <button
+                                        onClick={() => quantity < maxStock && setQuantity(quantity + 1)}
+                                        className={styles.qtyBtn}
+                                        disabled={quantity >= maxStock}
+                                    >
+                                        <Plus size={20} />
+                                    </button>
+                                </div>
 
-                        {/* SELECTOR DE CANTIDAD */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                            <span style={{ fontWeight: 600, color: '#64748b' }}>Cantidad:</span>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '0.5rem',
-                                overflow: 'hidden'
-                            }}>
                                 <button
-                                    onClick={() => handleQuantityChange(-1)}
-                                    disabled={quantity <= 1}
-                                    style={{ padding: '0.5rem', background: 'white', border: 'none', cursor: 'pointer' }}
+                                    className={`${styles.addButton} ${added ? styles.added : ''}`}
+                                    onClick={handleAddToCart}
+                                    disabled={added}
                                 >
-                                    <Minus size={18} />
-                                </button>
-                                <span style={{ padding: '0.5rem 1rem', fontWeight: 'bold' }}>{quantity}</span>
-                                <button
-                                    onClick={() => handleQuantityChange(1)}
-                                    disabled={quantity >= maxStock}
-                                    style={{ padding: '0.5rem', background: 'white', border: 'none', cursor: 'pointer' }}
-                                >
-                                    <Plus size={18} />
+                                    {added ? (
+                                        <>
+                                            <Check size={20} /> Agregado al carrito
+                                        </>
+                                    ) : (
+                                        <>
+                                            <ShoppingCart size={20} /> Agregar al Carrito
+                                        </>
+                                    )}
                                 </button>
                             </div>
-                        </div>
+                        )}
 
-                        <div className={styles.actions}>
-                            <button
-                                onClick={handleAddToCart}
-                                className={styles.addCartBtn}
-                                disabled={!product.stock}
-                            >
-                                <ShoppingCart size={20} />
-                                Agregar al Carrito
-                            </button>
-                        </div>
+                        {isAuthorized && outOfStock && (
+                            <div className={styles.outOfStockMessage}>
+                                <Bell size={20} />
+                                <span>Este producto no tiene stock actualmente.</span>
+                            </div>
+                        )}
+
+                        {!isAuthorized && (
+                            <div className={styles.registerPrompt}>
+                                <p>¿Eres cliente mayorista?</p>
+                                <a href="/cuenta" className={styles.loginLink}>Inicia sesión o regístrate aquí</a>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
