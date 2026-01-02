@@ -2,10 +2,11 @@
 import nodemailer from 'nodemailer';
 
 const createTransporter = () => {
-  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  // Forzamos el mail correcto para evitar problemas de cache de Vercel
+  const user = 'yeah.tecnologias@gmail.com';
   const pass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD;
 
-  console.log('[DEBUG-EMAIL] Iniciando transporte con usuario:', user ? `${user.substring(0, 3)}...` : 'NO DEFINIDO');
+  console.log('[DEBUG-EMAIL] Iniciando transporte con usuario:', user);
 
   return nodemailer.createTransport({
     service: 'gmail',
