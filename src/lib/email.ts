@@ -1,12 +1,15 @@
-// Versión: 1.0.3 - Cambio radical de nombres de variables para saltar cache de Vercel
+// Versión: 1.0.8 - HARDCODED PASS TEST
 import nodemailer from 'nodemailer';
 
 const createTransporter = () => {
-  // Forzamos el mail correcto para evitar problemas de cache de Vercel
+  // 1. MAIL CORRECTO
   const user = 'yeah.tecnologias@gmail.com';
-  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD;
 
-  console.log('[DEBUG-EMAIL] Iniciando transporte con usuario:', user);
+  // 2. CONTRASEÑA CORRECTA (HARDCODED) -> ¡PEGALA AQUI ABAJO!
+  // Reemplaza 'PEGAR_AQUI_LA_CLAVE_DE_16_LETRAS' por tu clave real
+  const pass = 'tbgzzllcvbwmwnaz';
+
+  console.log('[DEBUG-EMAIL] Usando credenciales directas:', { user, passLength: pass.length });
 
   return nodemailer.createTransport({
     service: 'gmail',
@@ -131,12 +134,14 @@ export async function sendOrderNotification(orderData: OrderEmailData) {
     </html>
   `;
 
-  const fromUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+  // Usamos el mismo user 'yeah.tecnologias@gmail.com' para el FROM
+  const fromUser = 'yeah.tecnologias@gmail.com';
 
   const mailOptions = {
     from: `"Yeah! Tecnologías" <${fromUser}>`,
     to: orderData.customerEmail,
-    bcc: process.env.ADMIN_EMAIL || fromUser,
+    // BCC al mismo mail de envío para tener copia
+    bcc: fromUser,
     subject: `🛒 Nuevo Pedido #${orderData.orderId} - ${orderData.customerName}`,
     html: htmlContent,
   };
@@ -213,7 +218,7 @@ export async function sendOrderStatusUpdate(
     </html>
   `;
 
-  const fromUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const fromUser = 'yeah.tecnologias@gmail.com';
 
   const mailOptions = {
     from: `"Yeah! Tecnologías" <${fromUser}>`,
