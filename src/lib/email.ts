@@ -1,13 +1,17 @@
 import nodemailer from 'nodemailer';
 
-// Configurar el transporter de nodemailer
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+// Versión: 1.0.1 - Actualizado para forzar lectura de variables nuevas
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+};
+
+const transporter = createTransporter();
 
 interface OrderEmailData {
   orderId: string;
