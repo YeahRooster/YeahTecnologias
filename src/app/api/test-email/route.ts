@@ -4,11 +4,12 @@ import nodemailer from 'nodemailer';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-    // Preferir nombres nuevos
+    // Buscamos todas las variables que empiecen con EMAIL o SMTP para ver qué nombres "existen"
+    const allEnvKeys = Object.keys(process.env);
+    const emailRelatedKeys = allEnvKeys.filter(key => key.includes('EMAIL') || key.includes('SMTP'));
+
     const user = process.env.SMTP_USER || process.env.EMAIL_USER || '';
     const pass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD || '';
-
-    const isUsingNewNames = !!process.env.SMTP_USER;
 
     // MÁSCARA DE SEGURIDAD
     const maskPass = (p: string) => {
@@ -30,19 +31,16 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-        estado_variables: {
-            usando_nombres_nuevos: isUsingNewNames,
-            EMAIL_USER_existente: !!process.env.EMAIL_USER,
-            SMTP_USER_existente: !!process.env.SMTP_USER,
-        },
-        diagnostico: {
-            usuario_final_leido: user,
-            longitud_password: pass.length,
-            password_mascarada: maskPass(pass),
-            tiene_espacios: pass.includes(' ')
+        debug_version: "1.0.5-ENV-DETECTIVE",
+        variables_detectadas_en_vercel: emailRelatedKeys,
+        configuracion_actual: {
+            usando_smtp_user: !!process.env.SMTP_USER,
+            usando_email_user: !!process.env.EMAIL_USER,
+            usuario_final: user,
+            longitud_pass: pass.length,
+            pass_mascara: maskPass(pass)
         },
         resultado_smtp: smtpResult,
-        debug_version: "1.0.4-SMTP-VARS",
-        instrucciones: "Si 'usando_nombres_nuevos' es false, agrega SMTP_USER y SMTP_PASS en Vercel."
+        sugerencia: emailRelatedKeys.length === 0 ? "Vercel no está inyectando NINGUNA variable. Revisa el entorno." : "Mira los nombres arriba para ver si hay errores de escritura."
     });
 }
