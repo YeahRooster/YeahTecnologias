@@ -130,7 +130,6 @@ function CatalogContent() {
                 <h1 className="section-title" style={{ textAlign: 'left', marginBottom: '0.5rem' }}>
                     {searchQuery ? `Búsqueda: "${searchQuery}"` : 'Catálogo Mayorista'}
                 </h1>
-                <p style={{ color: '#64748b' }}>{filteredProducts.length} productos disponibles</p>
             </div>
 
             {/* BANNER DE ACCESO */}

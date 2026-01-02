@@ -1,13 +1,17 @@
-// Versión: 1.0.2 - Forzando actualización de variables de entorno en Vercel
+// Versión: 1.0.3 - Cambio radical de nombres de variables para saltar cache de Vercel
 import nodemailer from 'nodemailer';
 
-// Versión: 1.0.1 - Actualizado para forzar lectura de variables nuevas
 const createTransporter = () => {
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD;
+
+  console.log('[DEBUG-EMAIL] Iniciando transporte con usuario:', user ? `${user.substring(0, 3)}...` : 'NO DEFINIDO');
+
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
+      user: user,
+      pass: pass,
     },
   });
 };
@@ -126,10 +130,12 @@ export async function sendOrderNotification(orderData: OrderEmailData) {
     </html>
   `;
 
+  const fromUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+
   const mailOptions = {
-    from: `"Yeah! Tecnologías" <${process.env.EMAIL_USER}>`,
+    from: `"Yeah! Tecnologías" <${fromUser}>`,
     to: orderData.customerEmail,
-    bcc: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+    bcc: process.env.ADMIN_EMAIL || fromUser,
     subject: `🛒 Nuevo Pedido #${orderData.orderId} - ${orderData.customerName}`,
     html: htmlContent,
   };
@@ -206,8 +212,10 @@ export async function sendOrderStatusUpdate(
     </html>
   `;
 
+  const fromUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+
   const mailOptions = {
-    from: `"Yeah! Tecnologías" <${process.env.EMAIL_USER}>`,
+    from: `"Yeah! Tecnologías" <${fromUser}>`,
     to: email,
     subject: subject,
     html: htmlContent,

@@ -252,3 +252,31 @@
     font-size: 1rem;
     color: var(--primary);
 }
+
+.printLink {
+    text-decoration: none;
+}
+
+.printLink:hover {
+    text-decoration: underline !important;
+}
+
+.statusActive {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background-color: #dcfce7;
+    color: #166534;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.statusPending {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background-color: #fef3c7;
+    color: #92400e;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}

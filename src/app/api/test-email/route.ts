@@ -4,8 +4,11 @@ import nodemailer from 'nodemailer';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-    const user = process.env.EMAIL_USER || '';
-    const pass = process.env.EMAIL_PASSWORD || '';
+    // Preferir nombres nuevos
+    const user = process.env.SMTP_USER || process.env.EMAIL_USER || '';
+    const pass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD || '';
+
+    const isUsingNewNames = !!process.env.SMTP_USER;
 
     // MÁSCARA DE SEGURIDAD
     const maskPass = (p: string) => {
@@ -27,12 +30,18 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
+        estado_variables: {
+            usando_nombres_nuevos: isUsingNewNames,
+            EMAIL_USER_existente: !!process.env.EMAIL_USER,
+            SMTP_USER_existente: !!process.env.SMTP_USER,
+        },
         diagnostico: {
-            usuario_leido: user,
+            usuario_final_leido: user,
             longitud_password: pass.length,
             password_mascarada: maskPass(pass),
             tiene_espacios: pass.includes(' ')
         },
-        resultado_smtp: smtpResult
+        resultado_smtp: smtpResult,
+        instrucciones: "Si 'usando_nombres_nuevos' es false, agrega SMTP_USER y SMTP_PASS en Vercel."
     });
 }

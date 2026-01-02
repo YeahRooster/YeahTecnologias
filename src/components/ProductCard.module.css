@@ -89,6 +89,7 @@
   /* Eliminamos el flex: 1 y clamp aquí si queremos que la descripción empuje el contenido */
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -101,6 +102,7 @@
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   /* Limitar a 2 líneas */
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -188,14 +190,28 @@
   background-color: var(--success);
 }
 
-.notifyButton {
-  background-color: #f59e0b;
-  /* Amber 500 */
-  color: white;
-  cursor: pointer !important;
+/* --- Precios Bloqueados --- */
+.lockedPrice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0;
 }
 
-.notifyButton:hover {
-  background-color: #d97706;
-  /* Amber 600 */
+.blurredPrice {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent);
+  filter: blur(5px);
+  user-select: none;
+  opacity: 0.6;
+}
+
+.lockText {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
 }
