@@ -42,6 +42,7 @@ export async function GET(request: Request) {
             tiene_espacios: pass.includes(' ')
         },
         resultado_smtp: smtpResult,
+        debug_version: "1.0.4-SMTP-VARS",
         instrucciones: "Si 'usando_nombres_nuevos' es false, agrega SMTP_USER y SMTP_PASS en Vercel."
     });
 }
