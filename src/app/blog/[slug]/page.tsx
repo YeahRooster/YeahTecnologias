@@ -1,14 +1,38 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState, useEffect } from 'react';
 import { getPostBySlug, getRelatedPosts } from '@/data/blogPosts';
-import { ArrowLeft, Calendar, User, Clock, Share2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Share2, Heart } from 'lucide-react';
 import Link from 'next/link';
 import styles from './article.module.css';
 
 export default function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
     const article = getPostBySlug(slug);
+
+    const [liked, setLiked] = useState(false);
+
+    useEffect(() => {
+        // Verificar si ya le dio like antes
+        const storedLikes = JSON.parse(localStorage.getItem('blog_likes') || '{}');
+        if (storedLikes[slug]) {
+            setLiked(true);
+        }
+    }, [slug]);
+
+    const handleLike = () => {
+        const storedLikes = JSON.parse(localStorage.getItem('blog_likes') || '{}');
+        const newValue = !liked;
+
+        if (newValue) {
+            storedLikes[slug] = true;
+        } else {
+            delete storedLikes[slug];
+        }
+
+        localStorage.setItem('blog_likes', JSON.stringify(storedLikes));
+        setLiked(newValue);
+    };
 
     if (!article) {
         return (
@@ -37,7 +61,6 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
                         <h1 className={styles.title}>{article.title}</h1>
                         <div className={styles.meta}>
                             <span><Calendar size={16} /> {article.date}</span>
-                            <span><User size={16} /> {article.author}</span>
                             <span><Clock size={16} /> 5 min lectura</span>
                         </div>
                     </div>
@@ -59,9 +82,22 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
                     {/* COMPARTIR */}
                     <div className={styles.shareSection}>
                         <h3>¿Te gustó este artículo?</h3>
-                        <button className={styles.shareBtn}>
-                            <Share2 size={18} /> Compartir
-                        </button>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button
+                                onClick={handleLike}
+                                className={styles.shareBtn}
+                                style={{
+                                    background: liked ? '#ef4444' : 'white',
+                                    color: liked ? 'white' : '#ef4444',
+                                    border: '1px solid #ef4444'
+                                }}
+                            >
+                                <Heart size={18} fill={liked ? "white" : "none"} /> {liked ? 'Te gusta' : 'Me gusta'}
+                            </button>
+                            <button className={styles.shareBtn}>
+                                <Share2 size={18} /> Compartir
+                            </button>
+                        </div>
                     </div>
                 </article>
 

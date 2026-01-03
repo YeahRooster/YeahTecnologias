@@ -5,7 +5,7 @@ export interface BlogPost {
     excerpt: string;
     content: string; // HTML string for simplicity
     date: string;
-    author: string;
+    // author removido
     category: string;
     tags: string[];
     imageUrl: string;
@@ -18,7 +18,6 @@ export const blogPosts: BlogPost[] = [
         title: 'Cargadores rápidos y batería del celular: lo que de verdad importa',
         excerpt: 'No todo es marketing. Aprende a identificar un buen cargador, qué es el amperaje y cómo cuidar la vida útil de tu batería sin mitos.',
         date: '03 Ene, 2026',
-        author: 'Equipo Yeah!',
         category: 'Tecnología',
         tags: ['Cargadores', 'Batería', 'Guía', 'Mitos'],
         imageUrl: '/blog/charger-battery.png',
@@ -76,8 +75,7 @@ export const blogPosts: BlogPost[] = [
         slug: 'guia-auriculares-gamer',
         title: 'Guía definitiva: Cómo elegir tus auriculares gamer',
         excerpt: 'No todos los auriculares son iguales. Descubre qué buscar en cuanto a sonido, comodidad y micrófono según tu presupuesto.',
-        date: '27 Dic, 2025',
-        author: 'Equipo Yeah!',
+        date: '02 Ene, 2026',
         category: 'Audio',
         tags: ['Gamer', 'Auriculares', 'Guía', 'Audio'],
         imageUrl: '/blog/headphones.png', // Imagen generada IA
@@ -103,8 +101,7 @@ export const blogPosts: BlogPost[] = [
         slug: 'mantenimiento-pc-lenta',
         title: '5 Errores que hacen que tu PC vaya lenta',
         excerpt: '¿Tu computadora ya no vuela como antes? Antes de comprar una nueva, revisa estos puntos críticos de mantenimiento.',
-        date: '20 Dic, 2025',
-        author: 'Soporte Técnico',
+        date: '28 Dic, 2025',
         category: 'PC & Hardware',
         tags: ['Mantenimiento', 'PC', 'Tips', 'Hardware'],
         imageUrl: '/blog/pc-cleaning.png', // Imagen generada IA
@@ -128,8 +125,7 @@ export const blogPosts: BlogPost[] = [
         slug: 'smartwatch-vs-smartband',
         title: 'Smartwatch vs Smartband: ¿Cuál necesitas?',
         excerpt: 'Analizamos las diferencias clave entre estos dos wearables para ayudarte a decidir cuál se adapta mejor a tu estilo de vida.',
-        date: '15 Dic, 2025',
-        author: 'Editorial Tech',
+        date: '26 Dic, 2025',
         category: 'Wearables',
         tags: ['Smartwatch', 'Comparativa', 'Gadgets'],
         imageUrl: '/blog/smartwatch.png', // Imagen generada IA

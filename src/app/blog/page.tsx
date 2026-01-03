@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { getAllPosts, getAllCategories } from '@/data/blogPosts';
 import Link from 'next/link';
-import { Calendar, User, ArrowRight, Tag, BookOpen } from 'lucide-react';
+import { Calendar, ArrowRight, Tag, BookOpen } from 'lucide-react';
 import styles from './blog.module.css';
 
 export default function BlogPage() {
@@ -38,7 +38,6 @@ export default function BlogPage() {
                                 <div className={styles.cardContent}>
                                     <div className={styles.meta}>
                                         <span className={styles.metaItem}><Calendar size={14} /> {post.date}</span>
-                                        <span className={styles.metaItem}><User size={14} /> {post.author}</span>
                                     </div>
                                     <h3>{post.title}</h3>
                                     <p>{post.excerpt}</p>
