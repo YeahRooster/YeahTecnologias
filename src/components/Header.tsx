@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, User, Search, Package, Calculator, Book, Loader2 } from "lucide-react";
+import { ShoppingCart, User, Search, Package, Calculator, Book, Loader2, Instagram, Phone } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -87,8 +87,16 @@ export default function Header() {
     return (
         <header className="header">
             <div className="top-bar">
-                <div className="container">
-                    <p>📦 Envíos a todo el país | No es solo tecnología... ¡es Yeah!</p>
+                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <p style={{ margin: 0 }}>📦 Envíos a todo el país | No es solo tecnología... ¡es Yeah!</p>
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <a href="https://www.instagram.com/yeahtecnologias/" target="_blank" rel="noopener noreferrer" style={{ color: 'white', display: 'flex', alignItems: 'center' }} title="Instagram">
+                            <Instagram size={18} />
+                        </a>
+                        <a href="https://wa.me/5493425924747" target="_blank" rel="noopener noreferrer" style={{ color: 'white', display: 'flex', alignItems: 'center' }} title="WhatsApp">
+                            <Phone size={18} />
+                        </a>
+                    </div>
                 </div>
             </div>
             <div className="main-header container">

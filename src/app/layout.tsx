@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import CartDrawer from "@/components/CartDrawer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import PriceWarning from "@/components/PriceWarning";
+import { Instagram, Phone } from "lucide-react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -36,6 +37,14 @@ export default function RootLayout({
               <div className="footer-section">
                 <h3>Yeah! Tecnologías</h3>
                 <p>Tu socio confiable para insumos tecnológicos al por mayor. Calidad y precio garantizados.</p>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                  <a href="https://www.instagram.com/yeahtecnologias/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#E1306C' }}>
+                    <Instagram size={20} /> Instagram
+                  </a>
+                  <a href="https://wa.me/5493425924747" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#25D366' }}>
+                    <Phone size={20} /> WhatsApp
+                  </a>
+                </div>
               </div>
               <div className="footer-section">
                 <h3>Enlaces Rápidos</h3>
