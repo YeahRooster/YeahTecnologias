@@ -1,36 +1,12 @@
-import Image from "next/image";
+import HeroCarousel from "@/components/HeroCarousel";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import styles from "./page.module.css";
 
 export default function Home() {
   return (
     <div className={styles.home}>
-      {/* Hero Section con Banner */}
-      <section className={styles.hero}>
-        <img src="/banner.jpg" alt="Yeah! Tecnologías - No es solo tecnología... Es Yeah!" className={styles.heroBanner} />
-        <div className={styles.heroOverlay}>
-          <div className="container">
-            <div className={styles.heroContent}>
-              <h1>Tu Negocio Merece la Mejor Tecnología</h1>
-              <p>Accedé a precios mayoristas exclusivos. Stock actualizado en tiempo real y envíos a todo el país.</p>
-              <div className={styles.heroButtons}>
-                <Link href="/catalogo" className="btn btn-primary">
-                  Ver Catálogo <ArrowRight size={20} style={{ marginLeft: '8px' }} />
-                </Link>
-                <a
-                  href="https://wa.me/5493425924747?text=Hola!%20Vengo%20de%20la%20web%20y%20quiero%20consultar%20con%20ventas."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-outline"
-                >
-                  Contactar Ventas
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Slider Dinámico de Banners */}
+      <HeroCarousel />
 
       {/* Categorías Destacadas */}
       <section className="container" style={{ padding: '4rem 1rem' }}>
