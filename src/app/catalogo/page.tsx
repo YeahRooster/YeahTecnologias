@@ -219,25 +219,67 @@ function CatalogContent() {
                 </div>
             </div>
 
-            {/* PRODUCTOS */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: '2rem'
-            }}>
-                {filteredProducts.map(product => (
-                    <div key={product.id} onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
-                        <ProductCard product={product} isAuthorized={isAuthorized} />
+            {/* LAYOUT PRINCIPAL: PRODUCTOS + SIDEBAR */}
+            <div className="catalog-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 3fr) 300px', gap: '2rem', alignItems: 'start' }}>
+
+                {/* COLUMNA PRODUCTOS */}
+                <div style={{ order: 1 }}>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+                        gap: '2rem'
+                    }}>
+                        {filteredProducts.map(product => (
+                            <div key={product.id} onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
+                                <ProductCard product={product} isAuthorized={isAuthorized} />
+                            </div>
+                        ))}
                     </div>
-                ))}
+
+                    {/* EMPTY STATE */}
+                    {filteredProducts.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
+                            <p style={{ fontSize: '1.2rem' }}>No se encontraron productos con estos filtros.</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* SIDEBAR PUBLICIDAD */}
+                <aside style={{ order: 2, display: 'flex', flexDirection: 'column', gap: '2rem', position: 'sticky', top: '2rem' }}>
+
+                    {/* Banner ROOSTER (Vertical) */}
+                    <a href="https://www.instagram.com/roosterespacio" target="_blank" rel="noopener noreferrer" style={{ display: 'block', transition: 'transform 0.2s', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                        <img
+                            src="/ads/rooster_banner.png"
+                            alt="Escuela de Dibujo Rooster"
+                            style={{ width: '100%', height: 'auto', display: 'block' }}
+                        />
+                    </a>
+
+                    {/* Banner REXY (Cuadrado) */}
+                    <a href="https://instagram.com/rexy.libreria" target="_blank" rel="noopener noreferrer" style={{ display: 'block', transition: 'transform 0.2s', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                        <img
+                            src="/ads/rexy_banner.png"
+                            alt="Librería Rexy"
+                            style={{ width: '100%', height: 'auto', display: 'block' }}
+                        />
+                    </a>
+
+                </aside>
+
             </div>
 
-            {/* EMPTY STATE */}
-            {filteredProducts.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
-                    <p style={{ fontSize: '1.2rem' }}>No se encontraron productos con estos filtros.</p>
-                </div>
-            )}
+            {/* Responsive Fix: En móvil sidebar baja */}
+            <style jsx>{`
+                @media (max-width: 1024px) {
+                    .catalog-layout {
+                        grid-template-columns: 1fr !important;
+                    }
+                    aside {
+                        display: none !important; /* Opcional: Ocultar en móvil para no molestar, o cambiar a grid inferior */
+                    }
+                }
+            `}</style>
 
             {/* MODAL */}
             {selectedProduct && (
