@@ -14,6 +14,7 @@ export interface CartItem {
 interface CartContextType {
     items: CartItem[];
     addToCart: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
+    addMultipleToCart: (newItems: { item: Omit<CartItem, 'quantity'>, quantity: number }[]) => void;
     removeFromCart: (id: string) => void;
     updateQuantity: (id: string, quantity: number) => void;
     clearCart: () => void;
@@ -62,6 +63,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setIsCartOpen(true);
     };
 
+    const addMultipleToCart = (newItems: { item: Omit<CartItem, 'quantity'>, quantity: number }[]) => {
+        setItems(prevItems => {
+            let updatedItems = [...prevItems];
+
+            newItems.forEach(({ item, quantity }) => {
+                const existingIndex = updatedItems.findIndex(i => i.id === item.id);
+
+                if (existingIndex >= 0) {
+                    // Actualizar existente respetando stock
+                    const currentItem = updatedItems[existingIndex];
+                    const newQuantity = Math.min(currentItem.quantity + quantity, item.maxStock);
+                    updatedItems[existingIndex] = { ...currentItem, quantity: newQuantity };
+                } else {
+                    // Agregar nuevo
+                    updatedItems.push({ ...item, quantity: Math.min(quantity, item.maxStock) });
+                }
+            });
+
+            return updatedItems;
+        });
+        setIsCartOpen(true);
+    };
+
     const removeFromCart = (id: string) => {
         setItems(prevItems => prevItems.filter(item => item.id !== id));
     };
@@ -91,6 +115,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             value={{
                 items,
                 addToCart,
+                addMultipleToCart,
                 removeFromCart,
                 updateQuantity,
                 clearCart,

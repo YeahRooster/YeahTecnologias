@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Package, Edit3, LogOut, Save, X, Printer } from 'lucide-react';
+import { User, Package, Edit3, LogOut, Save, X, Printer, RotateCcw } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
 import styles from './cuenta.module.css';
 
 interface UserData {
@@ -37,6 +38,18 @@ export default function CuentaPage() {
     const [editData, setEditData] = useState<Partial<UserData>>({});
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
+
+    // Para repetir pedidos
+    const { addMultipleToCart } = useCart();
+    const [allProducts, setAllProducts] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Cargar catálogo silenciosamente para tener precios actualizados al repetir pedido
+        fetch('/api/products')
+            .then(res => res.json())
+            .then(data => setAllProducts(data))
+            .catch(err => console.error("Error cargando productos para re-order:", err));
+    }, []);
 
     useEffect(() => {
         // Verificar si hay usuario logueado
@@ -138,6 +151,60 @@ export default function CuentaPage() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setEditData({ ...editData, [e.target.name]: e.target.value });
+    };
+
+    const handleReorder = (order: Order) => {
+        if (!allProducts.length) {
+            alert("Espera un momento, cargando catálogo...");
+            return;
+        }
+
+        const itemsToAdd: any[] = [];
+        const missingItems: string[] = [];
+
+        // Parsear string: "Producto A (x2); Producto B (x1)"
+        const productStrings = order.productos.split(';').map(s => s.trim());
+
+        productStrings.forEach(str => {
+            // Regex para sacar nombre y cantidad: "Nombre del Prod (x5)"
+            const match = str.match(/^(.*) \(x(\d+)\)$/);
+            if (match) {
+                const name = match[1].trim();
+                const qty = parseInt(match[2]);
+
+                // Buscar producto en catálogo actual
+                const product = allProducts.find(p =>
+                    (p.nombre || p.name) === name ||
+                    (p.nombre || p.name).toLowerCase() === name.toLowerCase()
+                );
+
+                if (product) {
+                    itemsToAdd.push({
+                        item: {
+                            id: product.id,
+                            name: product.nombre || product.name,
+                            price: parseFloat(product.precio || product.price),
+                            image: product.imagen || product.image || product.imageUrl,
+                            maxStock: parseInt(product.stock || '0')
+                        },
+                        quantity: qty
+                    });
+                } else {
+                    missingItems.push(name);
+                }
+            }
+        });
+
+        if (itemsToAdd.length > 0) {
+            addMultipleToCart(itemsToAdd);
+            let msg = "✅ Productos agregados al carrito.";
+            if (missingItems.length > 0) {
+                msg += `\n⚠️ No se encontraron (sin stock o descatalogados): ${missingItems.join(', ')}`;
+            }
+            alert(msg);
+        } else {
+            alert("❌ No se pudieron encontrar los productos de este pedido en el catálogo actual.");
+        }
     };
 
     if (loading) {
@@ -354,6 +421,17 @@ export default function CuentaPage() {
                                         <a href={`/comprobante/${order.idPedido}`} target="_blank" className={styles.printLink} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', textDecoration: 'none', color: '#4f46e5', fontWeight: 600, fontSize: '0.9rem' }}>
                                             <Printer size={16} /> Imprimir Comprobante
                                         </a>
+                                        <button
+                                            onClick={() => handleReorder(order)}
+                                            style={{
+                                                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                                                background: 'none', border: 'none', color: '#16a34a',
+                                                fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer',
+                                                marginLeft: '15px'
+                                            }}
+                                        >
+                                            <RotateCcw size={16} /> Repetir Pedido
+                                        </button>
                                     </div>
                                 </div>
                             ))}
