@@ -69,6 +69,7 @@ export interface Product {
   cost?: number;
   percentage?: number;
   originalPrice?: number;
+  tags?: string[];
 }
 
 // Interfaz para Usuario
@@ -119,8 +120,10 @@ export async function getProducts(): Promise<Product[]> {
       row.get('PrecioLista') ||
       row.get('Precio Lista') ||
       row.get('PrecioAnterior') ||
+      row.get('PrecioAnterior') ||
       '0'
     ),
+    tags: (row.get('Etiquetas') || row.get('Tags') || '').split(',').map((t: string) => t.trim()).filter(Boolean),
   }));
 }
 

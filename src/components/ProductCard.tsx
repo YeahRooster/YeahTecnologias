@@ -14,6 +14,7 @@ interface Product {
     stock?: number;
     description?: string;
     originalPrice?: number;
+    tags?: string[];
 }
 
 interface ProductCardProps {
@@ -77,6 +78,28 @@ export default function ProductCard({ product, isAuthorized = false }: ProductCa
                     </div>
                 )}
                 {outOfStock && <span className={styles.stockBadge}>Agotado</span>}
+
+                {/* Badges de Etiquetas (NUEVO, HOT, etc) */}
+                {!outOfStock && product.tags && product.tags.length > 0 && (
+                    <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        {product.tags.map(tag => (
+                            <span key={tag} style={{
+                                backgroundColor: tag.toUpperCase() === 'NUEVO' ? '#2563eb' :
+                                    tag.toUpperCase() === 'HOT' ? '#dc2626' :
+                                        tag.toUpperCase() === 'OFERTA' ? '#ea580c' : '#4f46e5',
+                                color: 'white',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.7rem',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                            }}>
+                                {tag}
+                            </span>
+                        ))}
+                    </div>
+                )}
             </div>
             <div className={styles.content}>
                 <span className={styles.category}>{product.category}</span>
