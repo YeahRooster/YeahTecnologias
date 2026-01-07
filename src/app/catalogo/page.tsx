@@ -14,6 +14,7 @@ interface Product {
     stock: number;
     image: string;
     category: string;
+    originalPrice?: number;
 }
 
 function CatalogContent() {
@@ -73,7 +74,8 @@ function CatalogContent() {
                     price: parseFloat(item.precio || item.price || '0'),
                     image: item.imagen || item.image || item.imageUrl || '',
                     category: item.categoria || item.category || '',
-                    stock: parseInt(item.stock !== undefined ? item.stock : '100')
+                    stock: parseInt(item.stock !== undefined ? item.stock : '100'),
+                    originalPrice: parseFloat(item.originalPrice || '0')
                 }));
 
                 setProducts(normalizedData.reverse());

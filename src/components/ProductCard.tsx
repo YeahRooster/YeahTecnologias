@@ -13,6 +13,7 @@ interface Product {
     category: string;
     stock?: number;
     description?: string;
+    originalPrice?: number;
 }
 
 interface ProductCardProps {
@@ -85,7 +86,33 @@ export default function ProductCard({ product, isAuthorized = false }: ProductCa
 
                 <div className={styles.priceRow}>
                     {isAuthorized ? (
-                        <span className={styles.price}>${product.price.toLocaleString('es-AR')}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            {(product.originalPrice ?? 0) > 0 && (product.originalPrice ?? 0) > product.price && (
+                                <span style={{
+                                    textDecoration: 'line-through',
+                                    color: '#94a3b8',
+                                    fontSize: '0.85rem',
+                                    marginBottom: '-2px'
+                                }}>
+                                    ${(product.originalPrice ?? 0).toLocaleString('es-AR')}
+                                </span>
+                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className={styles.price}>${product.price.toLocaleString('es-AR')}</span>
+                                {(product.originalPrice ?? 0) > 0 && (product.originalPrice ?? 0) > product.price && (
+                                    <span style={{
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        fontSize: '0.7rem',
+                                        padding: '2px 6px',
+                                        borderRadius: '4px',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        -{Math.round((((product.originalPrice ?? 0) - product.price) / (product.originalPrice || 1)) * 100)}%
+                                    </span>
+                                )}
+                            </div>
+                        </div>
                     ) : (
                         <div className={styles.lockedPrice}>
                             <span className={styles.blurredPrice}>$ 00.000,00</span>

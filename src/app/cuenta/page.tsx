@@ -24,6 +24,7 @@ interface Order {
     cantidades: string;
     total: number;
     estado: string;
+    estadoPago?: string; // Nuevo campo: 'total', 'parcial', 'pendiente'
 }
 
 export default function CuentaPage() {
@@ -316,9 +317,31 @@ export default function CuentaPage() {
                                 <div key={order.idPedido} className={styles.orderCard}>
                                     <div className={styles.orderHeader}>
                                         <span className={styles.orderId}>{order.idPedido}</span>
-                                        <span className={`${styles.orderStatus} ${styles[order.estado.toLowerCase()]}`}>
-                                            {order.estado}
-                                        </span>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            {/* Badge de Estado del Pedido */}
+                                            <span className={`${styles.orderStatus} ${styles[order.estado.toLowerCase()]}`}>
+                                                {order.estado}
+                                            </span>
+
+                                            {/* Badge de Estado de Pago (Si existe) */}
+                                            {order.estadoPago && (
+                                                <span style={{
+                                                    padding: '4px 8px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 600,
+                                                    textTransform: 'uppercase',
+                                                    backgroundColor: ['total', 'pagado', 'completo'].includes(order.estadoPago.toLowerCase()) ? '#dcfce7' :
+                                                        order.estadoPago.toLowerCase().includes('parcial') ? '#fef9c3' : '#fee2e2',
+                                                    color: ['total', 'pagado', 'completo'].includes(order.estadoPago.toLowerCase()) ? '#166534' :
+                                                        order.estadoPago.toLowerCase().includes('parcial') ? '#854d0e' : '#991b1b',
+                                                    border: `1px solid ${['total', 'pagado', 'completo'].includes(order.estadoPago.toLowerCase()) ? '#22c55e' :
+                                                        order.estadoPago.toLowerCase().includes('parcial') ? '#eab308' : '#ef4444'}`
+                                                }}>
+                                                    Pago: {order.estadoPago}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className={styles.orderDate}>{order.fecha}</div>
                                     <div className={styles.orderProducts}>

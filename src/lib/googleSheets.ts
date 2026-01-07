@@ -68,6 +68,7 @@ export interface Product {
   category: string;
   cost?: number;
   percentage?: number;
+  originalPrice?: number;
 }
 
 // Interfaz para Usuario
@@ -93,6 +94,7 @@ export interface Order {
   cantidades: string;
   total: number;
   estado: string;
+  estadoPago?: string;
 }
 
 // Obtener todos los productos
@@ -111,6 +113,14 @@ export async function getProducts(): Promise<Product[]> {
     image: row.get('ImagenURL') || '',
     category: row.get('Categoria') || '',
     cost: parseFloat(row.get('Costo') || '0'),
+    originalPrice: parseFloat(
+      row.get('PrecioOriginal') ||
+      row.get('Precio Original') ||
+      row.get('PrecioLista') ||
+      row.get('Precio Lista') ||
+      row.get('PrecioAnterior') ||
+      '0'
+    ),
   }));
 }
 
@@ -276,6 +286,7 @@ export async function getUserOrders(email: string): Promise<Order[]> {
     cantidades: row.get('Cantidades') || '',
     total: parseFloat(row.get('Total') || '0'),
     estado: row.get('Estado') || 'Pendiente',
+    estadoPago: row.get('EstadoPago') || row.get('Estado Pago') || row.get('Pago') || row.get('Estado de Pago') || 'Pendiente',
   }));
 }
 

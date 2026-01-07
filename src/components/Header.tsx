@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, User, Search, Package, Calculator, Book, Loader2, Instagram, Phone } from "lucide-react";
+import { ShoppingCart, User, Search, Package, Calculator, Book, Loader2, Instagram, Phone, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -42,6 +42,31 @@ export default function Header() {
             }
         }
         loadProducts();
+    }, []);
+
+    // Estado de autorización para mostrar precios en el buscador
+    const [isAuthorized, setIsAuthorized] = useState(false);
+
+    useEffect(() => {
+        // Verificar autorización al montar y cuando cambie el localStorage (idealmente usaríamos un contexto, pero esto funciona rápido)
+        const checkAuth = () => {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    if (user.habilitado) {
+                        setIsAuthorized(true);
+                        return;
+                    }
+                } catch (e) { }
+            }
+            setIsAuthorized(false);
+        };
+
+        checkAuth();
+        // Escuchar cambios en localStorage (opcional, por si se loguea en otra pestaña)
+        window.addEventListener('storage', checkAuth);
+        return () => window.removeEventListener('storage', checkAuth);
     }, []);
 
     // Filtrar al escribir
@@ -160,7 +185,13 @@ export default function Header() {
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <p style={{ margin: 0, fontWeight: 500, color: '#1e293b', fontSize: '0.9rem' }}>{p.name}</p>
-                                        <p style={{ margin: 0, color: '#f59e0b', fontSize: '0.8rem', fontWeight: 600 }}>${p.price.toLocaleString('es-AR')}</p>
+                                        {isAuthorized ? (
+                                            <p style={{ margin: 0, color: '#f59e0b', fontSize: '0.8rem', fontWeight: 600 }}>${p.price.toLocaleString('es-AR')}</p>
+                                        ) : (
+                                            <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <Lock size={12} /> Solo mayoristas
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             ))}
