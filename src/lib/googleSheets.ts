@@ -310,6 +310,7 @@ export async function getAllOrders(): Promise<Order[]> {
     cantidades: row.get('Cantidades') || '',
     total: parseFloat(row.get('Total') || '0'),
     estado: row.get('Estado') || 'Pendiente',
+    tipo: row.get('Tipo') || 'Remito',
   }));
 }
 
@@ -318,6 +319,7 @@ export async function createOrder(order: {
   email: string;
   products: { id: string; name: string; quantity: number; price: number }[];
   total: number;
+  tipo?: string; // Remito, Presupuesto, Nota de Crédito
 }): Promise<string> {
   const doc = await getDoc();
   const ordersSheet = doc.sheetsByTitle['Pedidos'];
@@ -339,9 +341,12 @@ export async function createOrder(order: {
     'Cantidades': '',
     'Total': order.total.toString(),
     'Estado': 'Pendiente',
+    'Tipo': order.tipo || 'Remito',
   });
 
-  // Descontar stock
+  // Descontar stock (Solo si es Remito o Nota de Crédito)
+  // Presupuesto no toca stock.
+  if (order.tipo === 'Presupuesto') return orderId;
   const productsSheet = doc.sheetsByTitle['Hoja 1'] || doc.sheetsByIndex[0];
   const productRows = await productsSheet.getRows();
 
@@ -353,7 +358,14 @@ export async function createOrder(order: {
 
     if (productRow) {
       const currentStock = parseInt(productRow.get('Stock') || '0');
-      const newStock = Math.max(0, currentStock - item.quantity);
+      let newStock = currentStock;
+
+      if (!order.tipo || order.tipo === 'Remito' || order.tipo === 'remito') {
+        newStock = Math.max(0, currentStock - item.quantity);
+      } else if (order.tipo === 'Nota de Crédito' || order.tipo === 'nota_credito') {
+        newStock = currentStock + item.quantity;
+      }
+
       productRow.set('Stock', newStock.toString());
       await productRow.save();
     }

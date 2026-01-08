@@ -4,7 +4,7 @@ import { sendOrderNotification } from '@/lib/email';
 
 export async function POST(request: Request) {
     try {
-        const { email, products, total } = await request.json();
+        const { email, products, total, tipo } = await request.json();
 
         if (!email || !products || products.length === 0) {
             return NextResponse.json(
@@ -18,6 +18,7 @@ export async function POST(request: Request) {
             email,
             products,
             total,
+            tipo
         });
 
         // Obtener datos del cliente para el email

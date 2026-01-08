@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye, Users, Check, ShieldAlert } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye, Users, Check, ShieldAlert, ShoppingCart, Plus, Trash2, FileText, UserPlus, CreditCard, RotateCcw } from 'lucide-react';
 import styles from './admin.module.css';
 
 interface Order {
@@ -23,10 +23,35 @@ interface UserAdmin {
     fechaRegistro: string;
 }
 
+interface Product {
+    id: string;
+    name: string;
+    price: number;
+    stock: number;
+    category: string;
+    originalPrice?: number;
+}
+
+interface PosItem {
+    id: string;
+    name: string;
+    price: number;
+    originalPrice: number; // Para referencia
+    quantity: number;
+    stock: number;
+}
+
+interface PosClient {
+    name: string;
+    email: string; // Puede ser vacío si es consumidor final
+    cuit: string;
+    type: 'Mayorista' | 'Consumidor Final';
+}
+
 export default function AdminPage() {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios'>('pedidos');
+    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios' | 'facturador'>('pedidos');
 
     // Estados para Pedidos
     const [orders, setOrders] = useState<Order[]>([]);
@@ -43,6 +68,14 @@ export default function AdminPage() {
     const [users, setUsers] = useState<UserAdmin[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [userSearchTerm, setUserSearchTerm] = useState('');
+
+    // Estados para Facturador (POS)
+    const [activePosTab, setActivePosTab] = useState<'remito' | 'presupuesto' | 'nota_credito'>('remito');
+    const [allProducts, setAllProducts] = useState<Product[]>([]);
+    const [posCart, setPosCart] = useState<PosItem[]>([{ id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0 }]); // Una fila vacía inicial
+    const [posClient, setPosClient] = useState<PosClient>({ name: 'Consumidor Final', email: '', cuit: '', type: 'Consumidor Final' });
+    const [clientSearch, setClientSearch] = useState('');
+    const [showClientSuggestions, setShowClientSuggestions] = useState(false);
 
     const fetchOrders = async (pwd: string) => {
         setLoading(true);
@@ -76,11 +109,130 @@ export default function AdminPage() {
         }
     };
 
+    const fetchAllProducts = async () => {
+        try {
+            const res = await fetch('/api/products');
+            if (res.ok) {
+                const data = await res.json();
+                const normalized = data.map((p: any) => ({
+                    id: p.id,
+                    name: p.nombre || p.name,
+                    price: parseFloat(p.precio || p.price || 0),
+                    stock: parseInt(p.stock || 0),
+                    category: p.categoria || p.category,
+                    originalPrice: parseFloat(p.precioOriginal || p.originalPrice || 0)
+                }));
+                setAllProducts(normalized);
+            }
+        } catch (e) {
+            console.error("Error cargando productos POS:", e);
+        }
+    };
+
     useEffect(() => {
-        if (isAuthenticated && activeTab === 'usuarios') {
-            fetchUsers();
+        if (isAuthenticated) {
+            if (activeTab === 'usuarios') fetchUsers();
+            if (activeTab === 'facturador') {
+                fetchAllProducts();
+                fetchUsers(); // Necesario para el autocompletado de clientes
+            }
         }
     }, [isAuthenticated, activeTab]);
+
+    // --- POS HANDLERS ---
+    const handleAddRow = () => {
+        setPosCart([...posCart, { id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0 }]);
+    };
+
+    const handleRemoveRow = (index: number) => {
+        if (posCart.length === 1) {
+            setPosCart([{ id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0 }]);
+            return;
+        }
+        const newCart = [...posCart];
+        newCart.splice(index, 1);
+        setPosCart(newCart);
+    };
+
+    const handleProductSelect = (index: number, product: Product) => {
+        const newCart = [...posCart];
+        newCart[index] = {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            originalPrice: product.originalPrice || product.price,
+            quantity: 1,
+            stock: product.stock
+        };
+        setPosCart(newCart);
+
+        // Auto-add new row if it's the last one
+        if (index === posCart.length - 1) {
+            handleAddRow();
+        }
+    };
+
+    const handleUpdateRow = (index: number, field: keyof PosItem, value: any) => {
+        const newCart = [...posCart];
+        newCart[index] = { ...newCart[index], [field]: value };
+        setPosCart(newCart);
+    };
+
+    const calculatePosTotal = () => {
+        return posCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    };
+
+    const handleConfirmSale = async () => {
+        if (posCart.length === 0 || !posCart[0].id) {
+            alert("El carrito está vacío");
+            return;
+        }
+
+        const confirm = window.confirm(`¿Confirmar venta por $${calculatePosTotal().toLocaleString('es-AR')}?`);
+        if (!confirm) return;
+
+        setLoading(true);
+        try {
+            // Filtrar filas vacías
+            const validItems = posCart.filter(i => i.id);
+
+            const saleData = {
+                email: posClient.email || 'mostrador@tienda.com',
+                products: validItems.map(i => ({
+                    id: i.id,
+                    name: i.name,
+                    quantity: i.quantity,
+                    price: i.price
+                })),
+                total: calculatePosTotal(),
+                isPos: true,
+                tipo: activePosTab === 'remito' ? 'Remito' : activePosTab === 'presupuesto' ? 'Presupuesto' : 'Nota de Crédito'
+            };
+
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(saleData)
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                alert(`✅ Venta Registrada! Pedido #${data.orderId}`);
+                // Reset
+                setPosCart([{ id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0 }]);
+                setPosClient({ name: 'Consumidor Final', email: '', cuit: '', type: 'Consumidor Final' });
+                // Refetch stock
+                fetchAllProducts();
+            } else {
+                alert("❌ Error al registrar venta");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error de conexión");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -172,6 +324,12 @@ export default function AdminPage() {
                         >
                             <Users size={18} /> Usuarios
                         </button>
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === 'facturador' ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab('facturador')}
+                        >
+                            <ShoppingCart size={18} /> Facturador
+                        </button>
                     </nav>
                 </div>
                 <button onClick={() => setIsAuthenticated(false)} className={styles.logoutBtn}>Cerrar Sesión</button>
@@ -218,7 +376,7 @@ export default function AdminPage() {
                         </table>
                     </div>
                 </>
-            ) : (
+            ) : activeTab === 'usuarios' ? (
                 <>
                     {/* Búsqueda Usuarios */}
                     <div className={styles.controls}>
@@ -266,37 +424,255 @@ export default function AdminPage() {
                         </table>
                     </div>
                 </>
+            ) : (
+                <div className={styles.posContainer}>
+                    {/* ENCABEZADO FACTURADOR */}
+                    <div className={styles.posHeader}>
+                        <div className={styles.clientSection}>
+                            <label>Cliente / Razón Social</label>
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Buscar cliente (o Consumidor Final)"
+                                    value={posClient.name}
+                                    onChange={(e) => {
+                                        setPosClient({ ...posClient, name: e.target.value });
+                                        setClientSearch(e.target.value);
+                                        setShowClientSuggestions(true);
+                                    }}
+                                    onFocus={() => setShowClientSuggestions(true)}
+                                    className={styles.posInput}
+                                />
+                                {showClientSuggestions && (clientSearch.length > 1 || clientSearch === '') && (
+                                    <>
+                                        <div className={styles.suggestionsOverlay} onClick={() => setShowClientSuggestions(false)} />
+                                        <div className={styles.suggestions}>
+                                            {users
+                                                .filter(u =>
+                                                    u.nombreCompleto.toLowerCase().includes(clientSearch.toLowerCase()) ||
+                                                    u.email.toLowerCase().includes(clientSearch.toLowerCase()) ||
+                                                    u.nombreLocal.toLowerCase().includes(clientSearch.toLowerCase())
+                                                )
+                                                .slice(0, 10)
+                                                .map(u => (
+                                                    <div
+                                                        key={u.email}
+                                                        className={styles.suggestionItem}
+                                                        onClick={() => {
+                                                            setPosClient({
+                                                                name: u.nombreCompleto,
+                                                                email: u.email,
+                                                                cuit: u.cuitCuil,
+                                                                type: 'Mayorista'
+                                                            });
+                                                            setClientSearch(u.nombreCompleto);
+                                                            setShowClientSuggestions(false);
+                                                        }}
+                                                    >
+                                                        <strong>{u.nombreCompleto}</strong>
+                                                        {u.nombreLocal && <span style={{ marginLeft: '10px', fontSize: '0.8rem', color: '#666' }}>({u.nombreLocal})</span>}
+                                                        <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>{u.email}</div>
+                                                    </div>
+                                                ))
+                                            }
+                                            <div
+                                                className={styles.suggestionItem}
+                                                onClick={() => {
+                                                    setPosClient({ name: 'Consumidor Final', email: '', cuit: '', type: 'Consumidor Final' });
+                                                    setClientSearch('Consumidor Final');
+                                                    setShowClientSuggestions(false);
+                                                }}
+                                            >
+                                                <em>Consumidor Final</em>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        <div className={styles.docTypeSection}>
+                            <label>Tipo Comprobante</label>
+                            <select
+                                value={activePosTab}
+                                onChange={(e) => setActivePosTab(e.target.value as any)}
+                                className={styles.posInpuSelect}
+                            >
+                                <option value="remito">Remito X</option>
+                                <option value="presupuesto">Presupuesto</option>
+                                <option value="nota_credito">Nota de Crédito</option>
+                            </select>
+                        </div>
+                        <div className={styles.dateSection}>
+                            <label>Fecha</label>
+                            <div className={styles.staticValue}>{new Date().toLocaleDateString('es-AR')}</div>
+                        </div>
+                    </div>
+
+                    {/* TABLA DE PRODUCTOS */}
+                    <div className={styles.posTableContainer}>
+                        <table className={styles.posTable}>
+                            <thead>
+                                <tr>
+                                    <th style={{ width: '80px' }}>Cant</th>
+                                    <th>Producto (Buscador)</th>
+                                    <th style={{ width: '120px' }}>Precio Unit.</th>
+                                    <th style={{ width: '120px' }}>Total</th>
+                                    <th style={{ width: '50px' }}></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {posCart.map((row, index) => (
+                                    <tr key={index}>
+                                        <td>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={row.quantity}
+                                                onChange={(e) => handleUpdateRow(index, 'quantity', parseInt(e.target.value) || 1)}
+                                                className={styles.posQtyInput}
+                                            />
+                                        </td>
+                                        <td style={{ position: 'relative' }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Escriba para buscar..."
+                                                value={row.name}
+                                                onChange={(e) => handleUpdateRow(index, 'name', e.target.value)}
+                                                className={styles.posProductInput}
+                                                autoComplete="off"
+                                            />
+
+                                            {row.name && !row.id && (
+                                                <div className={styles.productSuggestions}>
+                                                    {allProducts
+                                                        .filter(p => p.name.toLowerCase().includes(row.name.toLowerCase()))
+                                                        .slice(0, 10)
+                                                        .map(p => (
+                                                            <div
+                                                                key={p.id}
+                                                                className={styles.suggestionItem}
+                                                                onClick={() => handleProductSelect(index, p)}
+                                                            >
+                                                                <div style={{ fontWeight: 600 }}>{p.name}</div>
+                                                                <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                                                                    Precio: ${p.price} | Stock: {p.stock}
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <div className={styles.priceInputGroup}>
+                                                <span>$</span>
+                                                <input
+                                                    type="number"
+                                                    value={row.price}
+                                                    onChange={(e) => handleUpdateRow(index, 'price', parseFloat(e.target.value) || 0)}
+                                                    className={styles.posPriceInput}
+                                                />
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>${(row.price * row.quantity).toLocaleString('es-AR')}</strong>
+                                        </td>
+                                        <td>
+                                            <button onClick={() => handleRemoveRow(index)} className={styles.trashBtn} title="Eliminar fila">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <button onClick={handleAddRow} className={styles.addRowBtn}>
+                            <Plus size={16} /> Agregar Fila
+                        </button>
+                    </div>
+
+                    {/* TOTALES Y ACCIONES */}
+                    <div className={styles.posFooter}>
+                        <div className={styles.posTotal}>
+                            <span>Total:</span>
+                            <h1>${calculatePosTotal().toLocaleString('es-AR')}</h1>
+                        </div>
+                        <div className={styles.posActions}>
+                            <button className={styles.printBtn} onClick={() => window.print()}>
+                                <Printer size={20} /> Imprimir
+                            </button>
+                            <button className={styles.confirmBtn} onClick={handleConfirmSale} disabled={loading}>
+                                {loading ? 'Procesando...' : '✅ Confirmar Venta'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
-            {/* MODAL PEDIDO (Mismo que antes) */}
+            {/* MODAL DETALLE PEDIDO */}
             {selectedOrder && (
                 <div className={styles.modalOverlay} onClick={() => setSelectedOrder(null)}>
                     <div className={styles.modal} onClick={e => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
-                            <h2>Detalle Pedido {selectedOrder.idPedido}</h2>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <a href={`/comprobante/${selectedOrder.idPedido}`} target="_blank" className={styles.viewBtn}><Eye size={18} /> Ver Remito</a>
-                                <button className={styles.closeBtn} onClick={() => setSelectedOrder(null)}><X size={24} /></button>
+                            <div>
+                                <h2>Pedido {selectedOrder.idPedido}</h2>
+                                <p className={styles.dateInfo}>Fecha: {selectedOrder.fecha}</p>
                             </div>
+                            <button className={styles.closeBtn} onClick={() => setSelectedOrder(null)}><X size={24} /></button>
                         </div>
                         <div className={styles.modalContent}>
-                            <p><strong>Cliente:</strong> {selectedOrder.email}</p>
-                            <p><strong>Productos:</strong></p>
-                            <div className={styles.miniProductList}>
-                                {selectedOrder.productos.split(';').map((p, i) => <div key={i}>{p}</div>)}
+                            <div className={styles.detailSection}>
+                                <h3>Información del Cliente</h3>
+                                <p><strong>Email/Usuario:</strong> {selectedOrder.email}</p>
                             </div>
-                            <div style={{ marginTop: '20px' }}>
-                                <h3>Cambiar Estado</h3>
-                                <div className={styles.statusRow}>
-                                    <select value={newStatus} onChange={e => setNewStatus(e.target.value)} className={styles.statusSelect}>
+
+                            <div className={styles.detailSection}>
+                                <h3>Productos</h3>
+                                <div className={styles.productList}>
+                                    {selectedOrder.productos.split(';').map((p, i) => (
+                                        <div key={i} className={styles.productItem}>
+                                            <span>{p}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div style={{ textAlign: 'right', marginTop: '1rem' }}>
+                                    <h2 style={{ color: 'var(--primary)' }}>Total: ${selectedOrder.total.toLocaleString('es-AR')}</h2>
+                                </div>
+                            </div>
+
+                            <div className={styles.statusControl}>
+                                <h3>Gestión de Pedido</h3>
+                                <div className={styles.statusSelect}>
+                                    <select value={newStatus} onChange={e => setNewStatus(e.target.value)}>
                                         <option value="Pendiente">Pendiente</option>
                                         <option value="Preparado">Preparado</option>
                                         <option value="Entregado">Entregado</option>
                                         <option value="Cancelado">Cancelado</option>
                                     </select>
-                                    <button onClick={handleUpdateStatus} className={styles.updateBtn} disabled={updating}>{updating ? '...' : 'Actualizar'}</button>
+                                    <button onClick={handleUpdateStatus} className={styles.updateBtn} disabled={updating}>
+                                        {updating ? 'Guardando...' : 'Actualizar Estado'}
+                                    </button>
                                 </div>
-                                {updateMessage && <p>{updateMessage}</p>}
+                                {updateMessage && (
+                                    <p style={{ marginTop: '0.5rem', fontWeight: 600, color: updateMessage.includes('✅') ? 'green' : 'red' }}>
+                                        {updateMessage}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
+                                <a
+                                    href={`/comprobante/${selectedOrder.idPedido}`}
+                                    target="_blank"
+                                    className={styles.viewBtn}
+                                    style={{
+                                        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                                        backgroundColor: '#f8fafc', border: '1px solid var(--border)', padding: '0.75rem', borderRadius: 'var(--radius-md)',
+                                        textDecoration: 'none', color: 'var(--text-main)', fontWeight: 600
+                                    }}
+                                >
+                                    <FileText size={18} /> Ver Comprobante
+                                </a>
                             </div>
                         </div>
                     </div>
