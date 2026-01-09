@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { registerUser } from '@/lib/googleSheets';
+import { sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
     try {
@@ -17,6 +18,11 @@ export async function POST(request: Request) {
         }
 
         const user = await registerUser(userData);
+
+        // Enviar email de bienvenida (sin bloquear la respuesta)
+        sendWelcomeEmail(user.email, user.nombreCompleto).catch(err =>
+            console.error('Error enviando mail de bienvenida asíncrono:', err)
+        );
 
         // No devolvemos la contraseña
         const { password: _, ...userWithoutPassword } = user;

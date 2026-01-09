@@ -236,3 +236,55 @@ export async function sendOrderStatusUpdate(
     return false;
   }
 }
+
+export async function sendWelcomeEmail(email: string, customerName: string) {
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #0a0a1a 0%, #5c5ca8 100%); color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f8f9fa; padding: 30px 20px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; }
+        .footer { margin-top: 20px; font-size: 0.9em; color: #666; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>¡Bienvenido a Yeah! Tecnologías</h1>
+        </div>
+        <div class="content">
+          <p>Hola <strong>${customerName}</strong>,</p>
+          <p>Bienvenido, gracias por haberte registrado en nuestra pagina de <strong>Yeah Tecnologias!</strong></p>
+          <p>Por favor, espere hasta que el administrador del sitio apruebe su registro. Se le notificará una vez que se haya aprobado.</p>
+          <br>
+          <p>¡Gracias!</p>
+          <div class="footer">
+            <p>Atentamente,<br>El equipo de Yeah! Tecnologías</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const fromUser = 'yeah.tecnologias@gmail.com';
+
+  const mailOptions = {
+    from: `"Yeah! Tecnologías" <${fromUser}>`,
+    to: email,
+    subject: '✨ Bienvenido a Yeah! Tecnologías - Registro Recibido',
+    html: htmlContent,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email de bienvenida enviado a ${email}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Error enviando email de bienvenida:', error);
+    return false;
+  }
+}
