@@ -38,6 +38,7 @@ export default function CuentaPage() {
     const [editData, setEditData] = useState<Partial<UserData>>({});
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
     // Para repetir pedidos
     const { addMultipleToCart } = useCart();
@@ -418,7 +419,18 @@ export default function CuentaPage() {
                                         Total: <strong>${order.total.toLocaleString('es-AR')}</strong>
                                     </div>
                                     <div style={{ marginTop: '15px' }}>
-                                        <a href={`/comprobante/${order.idPedido}`} target="_blank" className={styles.printLink} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', textDecoration: 'none', color: '#4f46e5', fontWeight: 600, fontSize: '0.9rem' }}>
+                                        <button
+                                            onClick={() => setSelectedOrder(order)}
+                                            style={{
+                                                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                                                background: 'none', border: 'none', color: '#4f46e5',
+                                                fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer',
+                                                marginRight: '15px'
+                                            }}
+                                        >
+                                            <Package size={16} /> Ver Detalle
+                                        </button>
+                                        <a href={`/comprobante/${order.idPedido}`} target="_blank" className={styles.printLink} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', textDecoration: 'none', color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>
                                             <Printer size={16} /> Imprimir Comprobante
                                         </a>
                                         <button
@@ -437,6 +449,77 @@ export default function CuentaPage() {
                             ))}
                         </div>
                     )}
+                </div>
+            )}
+            {/* MODAL DETALLE PEDIDO PARA CLIENTE */}
+            {selectedOrder && (
+                <div className={styles.modalOverlay} onClick={() => setSelectedOrder(null)}>
+                    <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <div>
+                                <h2>Pedido {selectedOrder.idPedido}</h2>
+                                <p className={styles.modalDate}>Fecha: {selectedOrder.fecha}</p>
+                            </div>
+                            <button className={styles.closeBtn} onClick={() => setSelectedOrder(null)}><X size={24} /></button>
+                        </div>
+                        <div className={styles.modalContent}>
+                            <div className={styles.detailSection}>
+                                <h3>Resumen de Productos</h3>
+                                <div className={styles.productListDetailed}>
+                                    <table className={styles.detailTable}>
+                                        <thead>
+                                            <tr>
+                                                <th>Cant.</th>
+                                                <th>Descripción</th>
+                                                <th>Unit.</th>
+                                                <th>Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {selectedOrder.productos.split(';').map((itemStr, i) => {
+                                                const match = itemStr.match(/(.+)\s\(x(\d+)\)/);
+                                                if (match) {
+                                                    const nombre = match[1].trim();
+                                                    const cantidad = parseInt(match[2]);
+                                                    const prod = allProducts.find(p => (p.nombre || p.name) === nombre || (p.nombre || p.name).includes(nombre));
+                                                    const unitPrice = prod ? parseFloat(prod.precio || prod.price) : 0;
+                                                    return (
+                                                        <tr key={i}>
+                                                            <td style={{ textAlign: 'center' }}>{cantidad}</td>
+                                                            <td>{nombre}</td>
+                                                            <td>${unitPrice.toLocaleString('es-AR')}</td>
+                                                            <td style={{ fontWeight: 600 }}>${(unitPrice * cantidad).toLocaleString('es-AR')}</td>
+                                                        </tr>
+                                                    );
+                                                }
+                                                return (
+                                                    <tr key={i}>
+                                                        <td style={{ textAlign: 'center' }}>1</td>
+                                                        <td>{itemStr}</td>
+                                                        <td>-</td>
+                                                        <td>-</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div className={styles.detailTotal}>
+                                    <span>Total del Pedido:</span>
+                                    <strong>${selectedOrder.total.toLocaleString('es-AR')}</strong>
+                                </div>
+                            </div>
+
+                            <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+                                <button className={styles.reorderBtnModal} onClick={() => { handleReorder(selectedOrder); setSelectedOrder(null); }}>
+                                    <RotateCcw size={18} /> Repetir este Pedido
+                                </button>
+                                <a href={`/comprobante/${selectedOrder.idPedido}`} target="_blank" className={styles.printBtnModal}>
+                                    <Printer size={18} /> Ver para Imprimir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
