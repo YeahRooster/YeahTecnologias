@@ -79,7 +79,7 @@ export default function CuentaPage() {
 
             if (response.ok) {
                 setUser(data.user);
-                setOrders(data.orders || []);
+                setOrders((data.orders || []).reverse());
                 // Sincronizar localStorage con el estado más reciente de Google Sheets
                 localStorage.setItem('user', JSON.stringify(data.user));
             } else {
