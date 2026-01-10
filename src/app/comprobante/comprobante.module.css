@@ -17,19 +17,29 @@
     margin-bottom: 30px;
 }
 
-.logoArea h1 {
-    color: #4f46e5;
-    margin: 0;
-    font-size: 28px;
-    font-weight: 800;
-    font-style: italic;
-    text-transform: uppercase;
+.logoInfo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
-.logoArea p {
-    margin: 5px 0 0;
-    color: #666;
-    font-size: 14px;
+.printLogo {
+    width: 100px;
+    height: auto;
+    object-fit: contain;
+}
+
+.companyInfo h1 {
+    color: #0c0b29;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.companyInfo p {
+    margin: 2px 0;
+    color: #444;
+    font-size: 13px;
 }
 
 .invoiceInfo {

@@ -105,11 +105,14 @@ export default function ComprobantePage() {
             <div className={styles.container} id="printableArea">
                 {/* HEADER */}
                 <div className={styles.header}>
-                    <div className={styles.logoArea}>
-                        <h1>YEAH! TECNOLOGÍAS</h1>
-                        <p>Insumos tecnológicos al por mayor</p>
-                        <p>Santa Fe, Argentina - Tel: 342 592 4747</p>
-                        <p>Email: ventas@yeahtecnologias.com</p>
+                    <div className={styles.logoInfo}>
+                        <img src="/logo.jpg" alt="Yeah! Tecnologías" className={styles.printLogo} />
+                        <div className={styles.companyInfo}>
+                            <h1>YEAH! TECNOLOGÍAS</h1>
+                            <p>Insumos tecnológicos al por mayor</p>
+                            <p>Santa Fe, Argentina - WhatsApp: +54 9 342 592 4747</p>
+                            <p>Sitio: yeah-tecnologias.vercel.app</p>
+                        </div>
                     </div>
                     <div className={styles.invoiceInfo}>
                         <h2 className={styles.invoiceTitle}>REMITO X</h2>

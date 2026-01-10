@@ -136,6 +136,9 @@ export default function AdminPage() {
     useEffect(() => {
         if (isAuthenticated) {
             if (activeTab === 'usuarios') fetchUsers();
+            if (activeTab === 'pedidos') {
+                fetchAllProducts(); // Necesario para mostrar precios en el detalle del modal
+            }
             if (activeTab === 'facturador') {
                 fetchAllProducts();
                 fetchUsers(); // Necesario para el autocompletado de clientes
@@ -300,7 +303,7 @@ export default function AdminPage() {
     const filteredOrders = orders.filter(o =>
         (o.idPedido.toLowerCase().includes(searchTerm.toLowerCase()) || o.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
         (filterEstado === 'Todos' || o.estado === filterEstado)
-    );
+    ).reverse(); // Mostrar primero los más nuevos
 
     const filteredUsers = users.filter(u =>
         u.email.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
@@ -715,16 +718,48 @@ export default function AdminPage() {
                             </div>
 
                             <div className={styles.detailSection}>
-                                <h3>Productos</h3>
-                                <div className={styles.productList}>
-                                    {selectedOrder.productos.split(';').map((p, i) => (
-                                        <div key={i} className={styles.productItem}>
-                                            <span>{p}</span>
-                                        </div>
-                                    ))}
+                                <h3>Detalle de Productos</h3>
+                                <div className={styles.productListDetailed}>
+                                    <table className={styles.detailTable}>
+                                        <thead>
+                                            <tr>
+                                                <th>Cant.</th>
+                                                <th>Producto</th>
+                                                <th>Unit.</th>
+                                                <th>Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {selectedOrder.productos.split(';').map((itemStr, i) => {
+                                                const match = itemStr.match(/(.+)\s\(x(\d+)\)/);
+                                                if (match) {
+                                                    const nombre = match[1].trim();
+                                                    const cantidad = parseInt(match[2]);
+                                                    const prod = allProducts.find(p => p.name === nombre) || allProducts.find(p => p.name.includes(nombre));
+                                                    const unitPrice = prod ? prod.price : 0;
+                                                    return (
+                                                        <tr key={i}>
+                                                            <td style={{ textAlign: 'center' }}>{cantidad}</td>
+                                                            <td>{nombre}</td>
+                                                            <td>${unitPrice.toLocaleString('es-AR')}</td>
+                                                            <td style={{ fontWeight: 600 }}>${(unitPrice * cantidad).toLocaleString('es-AR')}</td>
+                                                        </tr>
+                                                    );
+                                                }
+                                                return (
+                                                    <tr key={i}>
+                                                        <td style={{ textAlign: 'center' }}>1</td>
+                                                        <td>{itemStr}</td>
+                                                        <td>-</td>
+                                                        <td>-</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div style={{ textAlign: 'right', marginTop: '1rem' }}>
-                                    <h2 style={{ color: 'var(--primary)' }}>Total: ${selectedOrder.total.toLocaleString('es-AR')}</h2>
+                                <div style={{ textAlign: 'right', marginTop: '1rem', borderTop: '2px solid var(--border)', paddingTop: '1rem' }}>
+                                    <h2 style={{ color: 'var(--primary)' }}>A pagar: ${selectedOrder.total.toLocaleString('es-AR')}</h2>
                                 </div>
                             </div>
 
