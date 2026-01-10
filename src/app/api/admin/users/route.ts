@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAllUsers, toggleUserStatus } from '@/lib/googleSheets';
+import { getAllUsers, toggleUserStatus, findUserByEmail } from '@/lib/googleSheets';
+import { sendActivationEmail } from '@/lib/email';
 
 // Obtener todos los usuarios
 export async function GET() {
@@ -18,6 +19,17 @@ export async function PUT(request: Request) {
         const success = await toggleUserStatus(email, habilitado);
 
         if (success) {
+            // Si se habilitó, enviar mail de notificación
+            if (habilitado) {
+                try {
+                    const user = await findUserByEmail(email);
+                    if (user) {
+                        await sendActivationEmail(email, user.nombreCompleto);
+                    }
+                } catch (emailError) {
+                    console.error('Error enviando mail de activación:', emailError);
+                }
+            }
             return NextResponse.json({ success: true });
         } else {
             return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });

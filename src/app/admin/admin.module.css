@@ -700,6 +700,24 @@
   background: #f5f3ff;
 }
 
+.discountSection label {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.adminOnlyHeader,
+.adminOnlyCell {
+  background-color: #fffbeb;
+}
+
+.adminOnlyFooter {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 @media print {
   :global(body) * {
     visibility: hidden;
@@ -716,18 +734,100 @@
     top: 0;
     width: 100%;
     box-shadow: none;
-    padding: 0;
+    padding: 20px;
+    background: white;
   }
 
+  /* Ocultar elementos de UI durante la impresión */
+  .posHeader,
   .posActions,
   .addRowBtn,
-  .trashBtn {
+  .trashBtn,
+  .header,
+  .adminTabs,
+  .logoutBtn,
+  .adminOnlyHeader,
+  .adminOnlyCell,
+  .adminOnlyFooter,
+  .discountSection,
+  .posProductInput {
     display: none !important;
   }
 
-  .header,
-  .adminTabs,
-  .logoutBtn {
-    display: none !important;
+  /* Mostrar inputs como texto plano */
+  .posQtyInput {
+    border: none;
+    background: transparent;
+    padding: 0;
+    width: auto;
   }
+
+  /* El encabezado especial solo se ve al imprimir */
+  .printOnlyHeader {
+    display: block !important;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 20px;
+  }
+
+  .printHeaderTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .printLogo {
+    width: 150px;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .printCompanyInfo h2 {
+    margin: 0;
+    color: #000;
+  }
+
+  .printCompanyInfo p {
+    margin: 2px 0;
+    font-size: 0.85rem;
+  }
+
+  .docTypeBadge {
+    border: 2px solid #000;
+    padding: 5px 15px;
+    font-weight: 900;
+    font-size: 1.2rem;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .printClientInfo {
+    background: #f1f5f9;
+    padding: 15px;
+    border-radius: 4px;
+  }
+
+  .printClientInfo h3 {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid #cbd5e1;
+  }
+
+  .printClientInfo p {
+    margin: 5px 0;
+  }
+
+  .printProductText {
+    display: block !important;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+}
+
+/* Ocultar por defecto */
+.printOnlyHeader,
+.printProductText {
+  display: none;
 }

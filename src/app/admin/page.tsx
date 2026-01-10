@@ -30,6 +30,7 @@ interface Product {
     stock: number;
     category: string;
     originalPrice?: number;
+    cost: number;
 }
 
 interface PosItem {
@@ -39,6 +40,7 @@ interface PosItem {
     originalPrice: number; // Para referencia
     quantity: number;
     stock: number;
+    cost: number;
 }
 
 interface PosClient {
@@ -72,10 +74,11 @@ export default function AdminPage() {
     // Estados para Facturador (POS)
     const [activePosTab, setActivePosTab] = useState<'remito' | 'presupuesto' | 'nota_credito'>('remito');
     const [allProducts, setAllProducts] = useState<Product[]>([]);
-    const [posCart, setPosCart] = useState<PosItem[]>([{ id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0 }]); // Una fila vacía inicial
+    const [posCart, setPosCart] = useState<PosItem[]>([{ id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0, cost: 0 }]); // Una fila vacía inicial
     const [posClient, setPosClient] = useState<PosClient>({ name: 'Consumidor Final', email: '', cuit: '', type: 'Consumidor Final' });
     const [clientSearch, setClientSearch] = useState('');
     const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+    const [posDiscount, setPosDiscount] = useState(0); // Porcentaje de descuento global
 
     const fetchOrders = async (pwd: string) => {
         setLoading(true);
@@ -120,7 +123,8 @@ export default function AdminPage() {
                     price: parseFloat(p.precio || p.price || 0),
                     stock: parseInt(p.stock || 0),
                     category: p.categoria || p.category,
-                    originalPrice: parseFloat(p.precioOriginal || p.originalPrice || 0)
+                    originalPrice: parseFloat(p.precioOriginal || p.originalPrice || 0),
+                    cost: parseFloat(p.cost || p.costo || 0)
                 }));
                 setAllProducts(normalized);
             }
@@ -141,12 +145,12 @@ export default function AdminPage() {
 
     // --- POS HANDLERS ---
     const handleAddRow = () => {
-        setPosCart([...posCart, { id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0 }]);
+        setPosCart([...posCart, { id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0, cost: 0 }]);
     };
 
     const handleRemoveRow = (index: number) => {
         if (posCart.length === 1) {
-            setPosCart([{ id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0 }]);
+            setPosCart([{ id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0, cost: 0 }]);
             return;
         }
         const newCart = [...posCart];
@@ -162,7 +166,8 @@ export default function AdminPage() {
             price: product.price,
             originalPrice: product.originalPrice || product.price,
             quantity: 1,
-            stock: product.stock
+            stock: product.stock,
+            cost: product.cost
         };
         setPosCart(newCart);
 
@@ -178,8 +183,20 @@ export default function AdminPage() {
         setPosCart(newCart);
     };
 
-    const calculatePosTotal = () => {
+    const calculatePosSubtotal = () => {
         return posCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    };
+
+    const calculatePosTotal = () => {
+        const subtotal = calculatePosSubtotal();
+        return subtotal * (1 - (posDiscount / 100));
+    };
+
+    const calculatePosMargin = () => {
+        // El margen real es el total recaudado menos el costo total de los productos
+        const totalNeto = calculatePosTotal();
+        const totalCosto = posCart.reduce((sum, item) => sum + (item.cost * item.quantity), 0);
+        return totalNeto - totalCosto;
     };
 
     const handleConfirmSale = async () => {
@@ -219,8 +236,9 @@ export default function AdminPage() {
                 const data = await res.json();
                 alert(`✅ Venta Registrada! Pedido #${data.orderId}`);
                 // Reset
-                setPosCart([{ id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0 }]);
+                setPosCart([{ id: '', name: '', price: 0, originalPrice: 0, quantity: 1, stock: 0, cost: 0 }]);
                 setPosClient({ name: 'Consumidor Final', email: '', cuit: '', type: 'Consumidor Final' });
+                setPosDiscount(0);
                 // Refetch stock
                 fetchAllProducts();
             } else {
@@ -426,7 +444,32 @@ export default function AdminPage() {
                 </>
             ) : (
                 <div className={styles.posContainer}>
-                    {/* ENCABEZADO FACTURADOR */}
+                    {/* CABECERA EXCLUSIVA IMPRESIÓN */}
+                    <div className={styles.printOnlyHeader}>
+                        <div className={styles.printHeaderTop}>
+                            <img src="/logo.jpg" alt="Yeah! Tecnologías" className={styles.printLogo} />
+                            <div className={styles.printCompanyInfo}>
+                                <h2>YEAH! TECNOLOGÍAS</h2>
+                                <p>Santa Fe, Argentina</p>
+                                <p>WhatsApp: +54 9 342 592 4747</p>
+                                <p>yeah-tecnologias.vercel.app</p>
+                            </div>
+                            <div className={styles.printDocInfo}>
+                                <div className={styles.docTypeBadge}>
+                                    {activePosTab === 'remito' ? 'REMITO X' : activePosTab === 'presupuesto' ? 'PRESUPUESTO' : 'NOTA DE CRÉDITO'}
+                                </div>
+                                <p><strong>Fecha:</strong> {new Date().toLocaleDateString('es-AR')}</p>
+                            </div>
+                        </div>
+                        <div className={styles.printClientInfo}>
+                            <h3>Datos del Cliente:</h3>
+                            <p><strong>Razón Social:</strong> {posClient.name}</p>
+                            {posClient.email && <p><strong>Email:</strong> {posClient.email}</p>}
+                            {posClient.cuit && <p><strong>CUIT/CUIL:</strong> {posClient.cuit}</p>}
+                        </div>
+                    </div>
+
+                    {/* ENCABEZADO FACTURADOR (Modo Edición) */}
                     <div className={styles.posHeader}>
                         <div className={styles.clientSection}>
                             <label>Cliente / Razón Social</label>
@@ -506,6 +549,17 @@ export default function AdminPage() {
                             <label>Fecha</label>
                             <div className={styles.staticValue}>{new Date().toLocaleDateString('es-AR')}</div>
                         </div>
+                        <div className={styles.discountSection} style={{ borderLeft: '1px solid var(--border)', paddingLeft: '2rem' }}>
+                            <label>Descuento Global (%)</label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={posDiscount}
+                                onChange={(e) => setPosDiscount(parseFloat(e.target.value) || 0)}
+                                className={styles.posInput}
+                            />
+                        </div>
                     </div>
 
                     {/* TABLA DE PRODUCTOS */}
@@ -516,7 +570,9 @@ export default function AdminPage() {
                                     <th style={{ width: '80px' }}>Cant</th>
                                     <th>Producto (Buscador)</th>
                                     <th style={{ width: '120px' }}>Precio Unit.</th>
-                                    <th style={{ width: '120px' }}>Total</th>
+                                    <th className={styles.adminOnlyHeader} style={{ width: '100px' }}>Costo</th>
+                                    <th className={styles.adminOnlyHeader} title="Margen Bruto (sin descuento)" style={{ width: '100px' }}>Margen B.</th>
+                                    <th style={{ width: '120px' }}>Subtotal</th>
                                     <th style={{ width: '50px' }}></th>
                                 </tr>
                             </thead>
@@ -533,6 +589,9 @@ export default function AdminPage() {
                                             />
                                         </td>
                                         <td style={{ position: 'relative' }}>
+                                            {/* Texto para impresión */}
+                                            <span className={styles.printProductText}>{row.name}</span>
+
                                             <input
                                                 type="text"
                                                 placeholder="Escriba para buscar..."
@@ -574,6 +633,17 @@ export default function AdminPage() {
                                                 />
                                             </div>
                                         </td>
+                                        <td className={styles.adminOnlyCell}>
+                                            <span style={{ fontSize: '0.9rem', color: '#666' }}>${row.cost}</span>
+                                        </td>
+                                        <td className={styles.adminOnlyCell}>
+                                            <span style={{
+                                                fontWeight: 600,
+                                                color: (row.price - row.cost) >= 0 ? '#16a34a' : '#dc2626'
+                                            }}>
+                                                ${((row.price - row.cost) * row.quantity).toLocaleString('es-AR')}
+                                            </span>
+                                        </td>
                                         <td>
                                             <strong>${(row.price * row.quantity).toLocaleString('es-AR')}</strong>
                                         </td>
@@ -593,9 +663,27 @@ export default function AdminPage() {
 
                     {/* TOTALES Y ACCIONES */}
                     <div className={styles.posFooter}>
-                        <div className={styles.posTotal}>
-                            <span>Total:</span>
-                            <h1>${calculatePosTotal().toLocaleString('es-AR')}</h1>
+                        <div style={{ display: 'flex', gap: '3rem' }}>
+                            <div className={styles.posTotal}>
+                                {posDiscount > 0 && (
+                                    <div style={{ fontSize: '1rem', color: '#666', marginBottom: '0.25rem' }}>
+                                        Subtotal: ${calculatePosSubtotal().toLocaleString('es-AR')}
+                                    </div>
+                                )}
+                                <span>Total Final:</span>
+                                <h1>${calculatePosTotal().toLocaleString('es-AR')}</h1>
+                                {posDiscount > 0 && <small style={{ color: '#ff5722', fontWeight: 700 }}>{posDiscount}% OFF Aplicado</small>}
+                            </div>
+                            <div className={styles.adminOnlyFooter} style={{ borderLeft: '1px solid var(--border)', paddingLeft: '2rem' }}>
+                                <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Ganancia Real:</span>
+                                <h2 style={{
+                                    fontSize: '2rem',
+                                    color: calculatePosMargin() >= 0 ? '#16a34a' : '#dc2626',
+                                    marginTop: '0.5rem'
+                                }}>
+                                    ${calculatePosMargin().toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                </h2>
+                            </div>
                         </div>
                         <div className={styles.posActions}>
                             <button className={styles.printBtn} onClick={() => window.print()}>

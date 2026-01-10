@@ -288,3 +288,59 @@ export async function sendWelcomeEmail(email: string, customerName: string) {
     return false;
   }
 }
+
+export async function sendActivationEmail(email: string, customerName: string) {
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #059669; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f8f9fa; padding: 30px 20px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; }
+        .footer { margin-top: 20px; font-size: 0.9em; color: #666; text-align: center; }
+        .btn { display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>¡Tu cuenta ha sido aprobada! 🎉</h1>
+        </div>
+        <div class="content">
+          <p>Hola <strong>${customerName}</strong>,</p>
+          <p>Nos complace informarte que tu registro en <strong>Yeah! Tecnologías</strong> ha sido aprobado por el administrador.</p>
+          <p>Ya podés ingresar a nuestra plataforma con tu usuario y contraseña para ver el catálogo completo y todos los precios mayoristas.</p>
+          <div style="text-align: center;">
+            <a href="https://tienda.yeahtecnologias.com.ar/cuenta" class="btn">Ir a mi cuenta</a>
+          </div>
+          <br>
+          <p>¡Gracias por elegirnos!</p>
+          <div class="footer">
+            <p>Atentamente,<br>El equipo de Yeah! Tecnologías</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const fromUser = 'yeah.tecnologias@gmail.com';
+
+  const mailOptions = {
+    from: `"Yeah! Tecnologías" <${fromUser}>`,
+    to: email,
+    subject: '✅ Cuenta Activada - Ya podés ver los precios mayoristas',
+    html: htmlContent,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email de activación enviado a ${email}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Error enviando email de activación:', error);
+    return false;
+  }
+}
