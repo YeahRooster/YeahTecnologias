@@ -129,15 +129,13 @@ export default function Header() {
             </div>
 
             <div className="main-header container">
-                <div className="logo-wrapper">
-                    <Link href="/" className="logo">
-                        <img src="/logo.jpg" alt="Yeah! Tecnologías" className="logo-img" />
-                    </Link>
+                <Link href="/" className="logo">
+                    <img src="/logo.jpg" alt="Yeah! Tecnologías" className="logo-img" />
+                </Link>
 
-                    <button className="mobile-menu-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                        {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-                    </button>
-                </div>
+                <button className="mobile-menu-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                    {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                </button>
 
                 <div className={`navigation-container ${isMenuOpen ? 'show' : ''}`}>
                     <div className="search-container" ref={searchRef}>

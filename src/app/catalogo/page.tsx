@@ -206,7 +206,7 @@ function CatalogContent() {
             <div className={styles.catalogGrid}>
 
                 {/* COLUMNA PRODUCTOS */}
-                <div style={{ order: 1 }}>
+                <div>
                     <div className={styles.productsGrid}>
                         {filteredProducts.map(product => (
                             <div key={product.id} onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
