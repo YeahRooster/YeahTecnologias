@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import ProductCard from "@/components/ProductCard";
 import ProductModal from "@/components/ProductModal";
 import { Filter, Loader2, X, Lock } from "lucide-react";
+import styles from './catalogo.module.css';
 
 interface Product {
     id: string;
@@ -130,48 +131,35 @@ function CatalogContent() {
         <div className="container" style={{ padding: '2rem 1rem' }}>
 
             {/* Header */}
-            <div style={{ marginBottom: '2rem' }}>
+            <div className={styles.catalogHeader}>
                 <h1 className="section-title" style={{ textAlign: 'left', marginBottom: '0.5rem' }}>
                     {searchQuery ? `Búsqueda: "${searchQuery}"` : 'Catálogo Mayorista'}
                 </h1>
+                <p style={{ color: 'var(--text-secondary)' }}>{filteredProducts.length} productos disponibles</p>
             </div>
 
             {/* BANNER DE ACCESO */}
             {!isAuthorized && (
-                <div style={{
-                    background: userStatus === 'pending'
-                        ? 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)'
-                        : 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-                    border: `1px solid ${userStatus === 'pending' ? '#fde68a' : '#bae6fd'}`,
-                    padding: '2rem',
-                    borderRadius: '1rem',
-                    marginBottom: '2rem',
-                    textAlign: 'center',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                }}>
+                <div className={`${styles.authBanner} ${userStatus === 'pending' ? styles.authBannerPending : styles.authBannerGuest}`}>
                     {userStatus === 'pending' ? (
                         <>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⌛</div>
-                            <h2 style={{ color: '#92400e', marginBottom: '0.5rem' }}>Cuenta en Proceso de Aprobación</h2>
-                            <p style={{ color: '#b45309', maxWidth: '600px', margin: '0 auto 1.5rem auto' }}>
+                            <div className={styles.authIcon}>⌛</div>
+                            <h2 className={`${styles.authTitle} ${styles.authPendingTitle}`}>Cuenta en Proceso de Aprobación</h2>
+                            <p className={`${styles.authText} ${styles.authPendingText}`}>
                                 ¡Gracias por registrarte! Un administrador está revisando tus datos.
                                 En breve recibirás un email confirmando la habilitación para ver precios y comprar.
                             </p>
                         </>
                     ) : (
                         <>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏢</div>
-                            <h2 style={{ color: '#075985', marginBottom: '0.5rem' }}>Precios Exclusivos Mayoristas</h2>
-                            <p style={{ color: '#0369a1', maxWidth: '600px', margin: '0 auto 1.5rem auto' }}>
+                            <div className={styles.authIcon}>🏢</div>
+                            <h2 className={`${styles.authTitle} ${styles.authGuestTitle}`}>Precios Exclusivos Mayoristas</h2>
+                            <p className={`${styles.authText} ${styles.authGuestText}`}>
                                 Solo los clientes habilitados pueden ver nuestra lista de precios y realizar pedidos online.
                             </p>
-                            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                                <a href="/cuenta" style={{
-                                    background: '#4f46e5', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 600, textDecoration: 'none'
-                                }}>Ingresar</a>
-                                <a href="/cuenta" style={{
-                                    background: 'white', color: '#4f46e5', border: '1px solid #4f46e5', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 600, textDecoration: 'none'
-                                }}>Registrarme</a>
+                            <div className={styles.authActions}>
+                                <a href="/cuenta" className="btn btn-primary">Ingresar</a>
+                                <a href="/cuenta" className="btn btn-outline">Registrarme</a>
                             </div>
                         </>
                     )}
@@ -179,42 +167,33 @@ function CatalogContent() {
             )}
 
             {/* BARRA DE FILTROS */}
-            <div style={{
-                marginBottom: '2rem',
-                backgroundColor: '#f8fafc',
-                padding: '1.5rem',
-                borderRadius: '1rem',
-                border: '1px solid #e2e8f0',
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '1.5rem'
-            }}>
-                <div style={{ flex: '1', minWidth: '200px' }}>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Categoría</label>
+            <div className={styles.filterBar}>
+                <div className={styles.filterGroup}>
+                    <label className={styles.filterLabel}>Categoría</label>
                     <select
                         value={selectedCategory}
                         onChange={e => setSelectedCategory(e.target.value)}
-                        style={{ width: '100%', padding: '0.6rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1' }}
+                        className={styles.filterSelect}
                     >
                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
                 {isAuthorized && (
-                    <div style={{ flex: '1.5', minWidth: '250px' }}>
-                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Rango de Precio</label>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <input type="number" placeholder="Mín" value={minPrice} onChange={e => setMinPrice(e.target.value ? Number(e.target.value) : '')} style={{ width: '100%', padding: '0.6rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1' }} />
+                    <div className={styles.filterGroup} style={{ flex: '1.5' }}>
+                        <label className={styles.filterLabel}>Rango de Precio</label>
+                        <div className={styles.priceRangeInputs}>
+                            <input type="number" placeholder="Mín" value={minPrice} onChange={e => setMinPrice(e.target.value ? Number(e.target.value) : '')} className={styles.filterInput} />
                             <span>-</span>
-                            <input type="number" placeholder="Máx" value={maxPrice} onChange={e => setMaxPrice(e.target.value ? Number(e.target.value) : '')} style={{ width: '100%', padding: '0.6rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1' }} />
+                            <input type="number" placeholder="Máx" value={maxPrice} onChange={e => setMaxPrice(e.target.value ? Number(e.target.value) : '')} className={styles.filterInput} />
                         </div>
                     </div>
                 )}
-                <div style={{ flex: '1', minWidth: '180px' }}>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Orden</label>
+                <div className={styles.filterGroup}>
+                    <label className={styles.filterLabel}>Orden</label>
                     <select
                         value={sortOrder}
                         onChange={e => setSortOrder(e.target.value as any)}
-                        style={{ width: '100%', padding: '0.6rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1' }}
+                        className={styles.filterSelect}
                     >
                         <option value="default">Relevancia</option>
                         <option value="asc">Menor Precio</option>
@@ -224,15 +203,11 @@ function CatalogContent() {
             </div>
 
             {/* LAYOUT PRINCIPAL: PRODUCTOS + SIDEBAR */}
-            <div className="catalog-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 3fr) 300px', gap: '2rem', alignItems: 'start' }}>
+            <div className={styles.catalogGrid}>
 
                 {/* COLUMNA PRODUCTOS */}
                 <div style={{ order: 1 }}>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-                        gap: '2rem'
-                    }}>
+                    <div className={styles.productsGrid}>
                         {filteredProducts.map(product => (
                             <div key={product.id} onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
                                 <ProductCard product={product} isAuthorized={isAuthorized} />
@@ -249,41 +224,29 @@ function CatalogContent() {
                 </div>
 
                 {/* SIDEBAR PUBLICIDAD */}
-                <aside style={{ order: 2, display: 'flex', flexDirection: 'column', gap: '2rem', position: 'sticky', top: '2rem' }}>
+                <aside className={styles.sidebar}>
 
                     {/* Banner ROOSTER (Vertical) */}
-                    <a href="https://www.instagram.com/roosterespacio" target="_blank" rel="noopener noreferrer" style={{ display: 'block', transition: 'transform 0.2s', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                    <a href="https://www.instagram.com/roosterespacio" target="_blank" rel="noopener noreferrer" className={styles.adBanner}>
                         <img
                             src="/ads/rooster_banner.png"
                             alt="Escuela de Dibujo Rooster"
-                            style={{ width: '100%', height: 'auto', display: 'block' }}
+                            className={styles.adImg}
                         />
                     </a>
 
                     {/* Banner REXY (Cuadrado) */}
-                    <a href="https://instagram.com/rexy.libreria" target="_blank" rel="noopener noreferrer" style={{ display: 'block', transition: 'transform 0.2s', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                    <a href="https://instagram.com/rexy.libreria" target="_blank" rel="noopener noreferrer" className={styles.adBanner}>
                         <img
                             src="/ads/rexy_banner.png"
                             alt="Librería Rexy"
-                            style={{ width: '100%', height: 'auto', display: 'block' }}
+                            className={styles.adImg}
                         />
                     </a>
 
                 </aside>
 
             </div>
-
-            {/* Responsive Fix: En móvil sidebar baja */}
-            <style jsx>{`
-                @media (max-width: 1024px) {
-                    .catalog-layout {
-                        grid-template-columns: 1fr !important;
-                    }
-                    aside {
-                        display: none !important; /* Opcional: Ocultar en móvil para no molestar, o cambiar a grid inferior */
-                    }
-                }
-            `}</style>
 
             {/* MODAL */}
             {selectedProduct && (
