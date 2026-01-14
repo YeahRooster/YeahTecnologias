@@ -14,6 +14,7 @@ interface Product {
     price: number;
     stock: number;
     image: string;
+    images: string[];
     category: string;
     originalPrice?: number;
     tags?: string[];
@@ -75,6 +76,7 @@ function CatalogContent() {
                     description: item.descripcion || item.description || '',
                     price: parseFloat(item.precio || item.price || '0'),
                     image: item.imagen || item.image || item.imageUrl || '',
+                    images: Array.isArray(item.images) ? item.images : [item.imagen || item.image || item.imageUrl || ''],
                     category: item.categoria || item.category || '',
                     stock: parseInt(item.stock !== undefined ? item.stock : '100'),
                     originalPrice: parseFloat(item.originalPrice || '0'),
@@ -135,7 +137,6 @@ function CatalogContent() {
                 <h1 className="section-title" style={{ textAlign: 'left', marginBottom: '0.5rem' }}>
                     {searchQuery ? `Búsqueda: "${searchQuery}"` : 'Catálogo Mayorista'}
                 </h1>
-                <p style={{ color: 'var(--text-secondary)' }}>{filteredProducts.length} productos disponibles</p>
             </div>
 
             {/* BANNER DE ACCESO */}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Plus, Minus, Check, X, Bell } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Check, X, Bell, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import styles from "./ProductModal.module.css";
 
@@ -10,6 +10,7 @@ interface Product {
     name: string;
     price: number;
     image?: string;
+    images?: string[];
     category: string;
     stock?: number;
     description?: string;
@@ -25,9 +26,12 @@ export default function ProductModal({ product, onClose, isAuthorized = false }:
     const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(1);
     const [added, setAdded] = useState(false);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
 
     const maxStock = product.stock || 0;
     const outOfStock = maxStock <= 0;
+    // Utilizamos el array 'images' que ahora contiene todas las URLs separadas por coma
+    const allImages = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
 
     const handleAddToCart = () => {
         if (outOfStock) return;
@@ -44,6 +48,16 @@ export default function ProductModal({ product, onClose, isAuthorized = false }:
         setTimeout(() => {
             setAdded(false);
         }, 1500);
+    };
+
+    const handleNext = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setActiveImageIndex((prev) => (prev + 1) % allImages.length);
+    };
+
+    const handlePrev = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setActiveImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
     };
 
     // Cerrar con Escape
@@ -64,10 +78,42 @@ export default function ProductModal({ product, onClose, isAuthorized = false }:
 
                 <div className={styles.grid}>
                     <div className={styles.imageSection}>
-                        {product.image ? (
-                            <img src={product.image} alt={product.name} className={styles.mainImage} />
-                        ) : (
-                            <div className={styles.placeholder}>Sin Imagen</div>
+                        <div className={styles.mainImageWrapper}>
+                            {allImages.length > 0 ? (
+                                <>
+                                    <img
+                                        src={allImages[activeImageIndex]}
+                                        alt={product.name}
+                                        className={styles.mainImage}
+                                    />
+                                    {allImages.length > 1 && (
+                                        <>
+                                            <button className={styles.navBtnLeft} onClick={handlePrev}>
+                                                <ChevronLeft size={24} />
+                                            </button>
+                                            <button className={styles.navBtnRight} onClick={handleNext}>
+                                                <ChevronRight size={24} />
+                                            </button>
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                <div className={styles.placeholder}>Sin Imagen</div>
+                            )}
+                        </div>
+
+                        {allImages.length > 1 && (
+                            <div className={styles.thumbnails}>
+                                {allImages.map((img, idx) => (
+                                    <div
+                                        key={idx}
+                                        className={`${styles.thumbnail} ${idx === activeImageIndex ? styles.activeThumbnail : ''}`}
+                                        onClick={() => setActiveImageIndex(idx)}
+                                    >
+                                        <img src={img} alt={`Vista ${idx + 1}`} />
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
 
@@ -89,14 +135,6 @@ export default function ProductModal({ product, onClose, isAuthorized = false }:
                         <div className={styles.description}>
                             {product.description || 'Sin descripción disponible.'}
                         </div>
-
-                        {product.stock !== undefined && isAuthorized && (
-                            <div className={styles.stockInfo}>
-                                Stock disponible: <span className={product.stock > 0 ? styles.inStock : styles.noStock}>
-                                    {product.stock > 0 ? product.stock : 'Agotado'}
-                                </span>
-                            </div>
-                        )}
 
                         {isAuthorized && !outOfStock && (
                             <div className={styles.actions}>

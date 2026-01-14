@@ -64,7 +64,8 @@ export interface Product {
   description: string;
   price: number;
   stock: number;
-  imageUrl?: string;
+  image: string;
+  images: string[];
   category: string;
   cost?: number;
   percentage?: number;
@@ -105,26 +106,33 @@ export async function getProducts(): Promise<Product[]> {
 
   const rows = await sheet.getRows();
 
-  return rows.map((row) => ({
-    id: row.get('ID') || '',
-    name: row.get('Nombre') || '',
-    description: row.get('Descripcion') || '',
-    price: parseFloat(row.get('Precio') || '0'),
-    stock: parseInt(row.get('Stock') || '0'),
-    image: row.get('ImagenURL') || '',
-    category: row.get('Categoria') || '',
-    cost: parseFloat(row.get('Costo') || '0'),
-    originalPrice: parseFloat(
-      row.get('PrecioOriginal') ||
-      row.get('Precio Original') ||
-      row.get('PrecioLista') ||
-      row.get('Precio Lista') ||
-      row.get('PrecioAnterior') ||
-      row.get('PrecioAnterior') ||
-      '0'
-    ),
-    tags: (row.get('Etiquetas') || row.get('Tags') || '').split(',').map((t: string) => t.trim()).filter(Boolean),
-  }));
+  return rows.map((row) => {
+    const rawImages = row.get('ImagenURL') || '';
+    // Separamos por coma y limpiamos espacios para obtener todas las URLs
+    const images = rawImages.split(',').map((url: string) => url.trim()).filter(Boolean);
+    const mainImage = images[0] || '';
+
+    return {
+      id: row.get('ID') || '',
+      name: row.get('Nombre') || '',
+      description: row.get('Descripcion') || '',
+      price: parseFloat(row.get('Precio') || '0'),
+      stock: parseInt(row.get('Stock') || '0'),
+      image: mainImage,
+      images: images,
+      category: row.get('Categoria') || '',
+      cost: parseFloat(row.get('Costo') || '0'),
+      originalPrice: parseFloat(
+        row.get('PrecioOriginal') ||
+        row.get('Precio Original') ||
+        row.get('PrecioLista') ||
+        row.get('Precio Lista') ||
+        row.get('PrecioAnterior') ||
+        '0'
+      ),
+      tags: (row.get('Etiquetas') || row.get('Tags') || '').split(',').map((t: string) => t.trim()).filter(Boolean),
+    };
+  });
 }
 
 // Buscar usuario por email
