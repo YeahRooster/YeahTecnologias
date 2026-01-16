@@ -1,8 +1,7 @@
-'use client';
-
 import { useState } from 'react';
-import { ShoppingCart, Plus, Minus, Check, Bell } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Check, Bell, Heart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useFavorites } from "@/context/FavoritesContext";
 import styles from "./ProductCard.module.css";
 
 interface Product {
@@ -24,6 +23,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, isAuthorized = false }: ProductCardProps) {
     const { addToCart } = useCart();
+    const { toggleFavorite, isFavorite } = useFavorites();
     const [quantity, setQuantity] = useState(1);
     const [added, setAdded] = useState(false);
 
@@ -78,6 +78,25 @@ export default function ProductCard({ product, isAuthorized = false }: ProductCa
                     </div>
                 )}
                 {outOfStock && <span className={styles.stockBadge}>Agotado</span>}
+
+                {/* Botón de Favoritos */}
+                <button
+                    className={`${styles.favoriteBtn} ${isFavorite(product.id) ? styles.isFavorite : ''}`}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite({
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            image: product.image,
+                            category: product.category,
+                            stock: maxStock
+                        });
+                    }}
+                    title={isFavorite(product.id) ? "Quitar de favoritos" : "Guardar en favoritos"}
+                >
+                    <Heart size={20} fill={isFavorite(product.id) ? "currentColor" : "none"} />
+                </button>
 
                 {/* Badges de Etiquetas (NUEVO, HOT, etc) */}
                 {!outOfStock && product.tags && product.tags.length > 0 && (

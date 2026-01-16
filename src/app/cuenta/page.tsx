@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Package, Edit3, LogOut, Save, X, Printer, RotateCcw } from 'lucide-react';
+import Link from 'next/link';
+import { User, Package, Edit3, LogOut, Save, X, Printer, RotateCcw, Heart, Download } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import styles from './cuenta.module.css';
 
@@ -245,6 +246,30 @@ export default function CuentaPage() {
             </div>
 
             {message && <div className={styles.successMessage}>{message}</div>}
+
+            <div className={styles.statsGrid}>
+                <div className={styles.statCard}>
+                    <Package size={24} />
+                    <div className={styles.statInfo}>
+                        <span className={styles.statValue}>{orders.length}</span>
+                        <span className={styles.statLabel}>Pedidos Realizados</span>
+                    </div>
+                </div>
+                <Link href="/favoritos" className={styles.statCard} style={{ cursor: 'pointer' }}>
+                    <Heart size={24} color="var(--accent)" />
+                    <div className={styles.statInfo}>
+                        <span className={styles.statValue}>Ver Mis</span>
+                        <span className={styles.statLabel}>Favoritos</span>
+                    </div>
+                </Link>
+                <Link href="/lista-de-precios" className={styles.statCard} style={{ cursor: 'pointer' }}>
+                    <Download size={24} color="#2563eb" />
+                    <div className={styles.statInfo}>
+                        <span className={styles.statValue}>Descargar</span>
+                        <span className={styles.statLabel}>Lista de Precios</span>
+                    </div>
+                </Link>
+            </div>
 
             {activeTab === 'perfil' && (
                 <div className={styles.profileCard}>

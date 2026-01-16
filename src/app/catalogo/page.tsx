@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductCard from "@/components/ProductCard";
 import ProductModal from "@/components/ProductModal";
-import { Filter, Loader2, X, Lock } from "lucide-react";
+import { Filter, Loader2, X, Lock, Download, Heart } from "lucide-react";
+import Link from "next/link";
 import styles from './catalogo.module.css';
 
 interface Product {
@@ -133,10 +134,21 @@ function CatalogContent() {
         <div className="container" style={{ padding: '2rem 1rem' }}>
 
             {/* Header */}
-            <div className={styles.catalogHeader}>
-                <h1 className="section-title" style={{ textAlign: 'left', marginBottom: '0.5rem' }}>
+            <div className={styles.catalogHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <h1 className="section-title" style={{ textAlign: 'left', marginBottom: 0 }}>
                     {searchQuery ? `Búsqueda: "${searchQuery}"` : 'Catálogo Mayorista'}
                 </h1>
+
+                {isAuthorized && (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <Link href="/favoritos" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}>
+                            <Heart size={18} fill="var(--accent)" color="var(--accent)" /> Mis Favoritos
+                        </Link>
+                        <Link href="/lista-de-precios" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}>
+                            <Download size={18} /> Descargar Lista PDF
+                        </Link>
+                    </div>
+                )}
             </div>
 
             {/* BANNER DE ACCESO */}

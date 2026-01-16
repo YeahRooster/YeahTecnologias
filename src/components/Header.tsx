@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, User, Search, Package, Calculator, Book, Loader2, Instagram, Phone, Lock, Menu, X } from "lucide-react";
+import { ShoppingCart, User, Search, Package, Calculator, Book, Loader2, Instagram, Phone, Lock, Menu, X, Heart } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import { useFavorites } from "@/context/FavoritesContext";
 
 interface ProductSimple {
     id: string;
@@ -16,6 +17,7 @@ interface ProductSimple {
 export default function Header() {
     const router = useRouter();
     const { totalItems, setIsCartOpen } = useCart();
+    const { favorites } = useFavorites();
     const [searchQuery, setSearchQuery] = useState('');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -199,6 +201,13 @@ export default function Header() {
                         <Link href="/calculadora" className="nav-item" onClick={() => setIsMenuOpen(false)}>
                             <Calculator size={24} className="nav-icon" />
                             <span>Calculadora</span>
+                        </Link>
+                        <Link href="/favoritos" className="nav-item" onClick={() => setIsMenuOpen(false)}>
+                            <div className="cart-icon-wrapper">
+                                <Heart size={24} className="nav-icon" />
+                                {favorites.length > 0 && <span className="cart-badge">{favorites.length}</span>}
+                            </div>
+                            <span>Favoritos</span>
                         </Link>
                         <Link href="/cuenta" className="nav-item" onClick={() => setIsMenuOpen(false)}>
                             <User size={24} className="nav-icon" />
