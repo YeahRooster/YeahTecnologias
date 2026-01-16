@@ -1,4 +1,5 @@
 import HeroCarousel from "@/components/HeroCarousel";
+import NewArrivals from "@/components/NewArrivals";
 import Link from "next/link";
 import styles from "./page.module.css";
 
@@ -7,6 +8,9 @@ export default function Home() {
     <div className={styles.home}>
       {/* Slider Dinámico de Banners */}
       <HeroCarousel />
+
+      {/* Últimos Ingresos (Novedades) */}
+      <NewArrivals />
 
       {/* Categorías Destacadas */}
       <section className="container" style={{ padding: '4rem 1rem' }}>
