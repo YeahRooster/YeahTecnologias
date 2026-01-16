@@ -106,21 +106,30 @@ export async function getProducts(): Promise<Product[]> {
 
   const rows = await sheet.getRows();
 
-  return rows.map((row) => {
+  const products: Product[] = [];
+
+  rows.forEach((row, index) => {
+    const name = row.get('Nombre');
+    if (!name) return; // Saltar si no tiene nombre
+
     const rawImages = row.get('ImagenURL') || '';
-    // Separamos por coma y limpiamos espacios para obtener todas las URLs
     const images = rawImages.split(',').map((url: string) => url.trim()).filter(Boolean);
     const mainImage = images[0] || '';
 
-    return {
-      id: row.get('ID') || '',
-      name: row.get('Nombre') || '',
-      description: row.get('Descripcion') || '',
+    // Generar un ID único: Prioridad al ID de la hoja, luego slug de nombre, luego índice por si hay nombres repetidos
+    const idFromSheet = row.get('ID');
+    const fallbackId = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index}`;
+    const id = idFromSheet ? idFromSheet.toString().trim() : fallbackId;
+
+    products.push({
+      id: id,
+      name: name.toString(),
+      description: (row.get('Descripcion') || '').toString(),
       price: parseFloat(row.get('Precio') || '0'),
       stock: parseInt(row.get('Stock') || '0'),
       image: mainImage,
       images: images,
-      category: row.get('Categoria') || '',
+      category: (row.get('Categoria') || '').toString(),
       cost: parseFloat(row.get('Costo') || '0'),
       originalPrice: parseFloat(
         row.get('PrecioOriginal') ||
@@ -131,8 +140,10 @@ export async function getProducts(): Promise<Product[]> {
         '0'
       ),
       tags: (row.get('Etiquetas') || row.get('Tags') || '').split(',').map((t: string) => t.trim()).filter(Boolean),
-    };
+    });
   });
+
+  return products;
 }
 
 // Buscar usuario por email

@@ -34,7 +34,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const savedCart = localStorage.getItem('cart');
         if (savedCart) {
-            setItems(JSON.parse(savedCart));
+            try {
+                const parsedItems = JSON.parse(savedCart);
+                // Limpiar posibles duplicados o IDs vacíos que hayan quedado de errores anteriores
+                const seen = new Set();
+                const cleanItems = parsedItems.filter((item: CartItem) => {
+                    if (!item.id || seen.has(item.id)) return false;
+                    seen.add(item.id);
+                    return true;
+                });
+                setItems(cleanItems);
+            } catch (e) {
+                console.error("Error cargando el carrito:", e);
+                setItems([]);
+            }
         }
     }, []);
 
