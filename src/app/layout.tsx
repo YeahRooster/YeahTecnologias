@@ -10,6 +10,8 @@ import CartDrawer from "@/components/CartDrawer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import PriceWarning from "@/components/PriceWarning";
 import { Instagram, Phone } from "lucide-react";
+import { Analytics } from "@vercel/analytics/react";
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -66,6 +68,7 @@ export default function RootLayout({
             </footer>
           </FavoritesProvider>
         </CartProvider>
+        <Analytics />
       </body>
     </html>
   );

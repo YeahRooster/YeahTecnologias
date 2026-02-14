@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@types/nodemailer": "^7.0.4",
+    "@vercel/analytics": "^1.6.1",
     "google-auth-library": "^10.5.0",
     "google-spreadsheet": "^5.0.2",
     "lucide-react": "^0.555.0",
