@@ -168,3 +168,103 @@
         flex-direction: column;
     }
 }
+
+/* Switch toggle styles */
+.switchContainer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+    align-self: center;
+}
+
+.switchLabelText {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 88px;
+    height: 38px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #4b5563; /* OFF: Dark grey */
+    background: linear-gradient(180deg, #5a6575 0%, #374151 100%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 0px rgba(255, 255, 255, 0.1);
+    transition: .3s;
+    border-radius: 20px;
+    border: 1px solid #1f2937;
+    overflow: hidden;
+}
+
+/* The text inside the slider */
+.slider::before {
+    content: 'OFF';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-weight: bold;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    transition: .3s;
+}
+
+.sliderKnob {
+    position: absolute;
+    height: 32px;
+    width: 32px;
+    left: 2px;
+    bottom: 2px;
+    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #e2e8f0 30%, #cbd5e1 60%, #94a3b8 100%);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), inset 0 -2px 3px rgba(0, 0, 0, 0.2), inset 0 2px 3px rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    transition: .3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    border: 1px solid #94a3b8;
+}
+
+/* Metallic brushed effect overlay for the knob */
+.sliderKnob::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(255,255,255,0) 0deg, rgba(255,255,255,0.4) 90deg, rgba(0,0,0,0.1) 180deg, rgba(255,255,255,0.4) 270deg, rgba(255,255,255,0) 360deg);
+    pointer-events: none;
+}
+
+/* Checked state (ON) */
+.switch input:checked + .slider {
+    background: linear-gradient(180deg, #10b981 0%, #047857 100%);
+    border-color: #065f46;
+}
+
+.switch input:checked + .slider::before {
+    content: 'ON';
+    position: absolute;
+    left: 14px;
+    right: auto;
+    color: #a7f3d0;
+}
+
+.switch input:checked + .slider .sliderKnob {
+    transform: translateX(50px);
+}

@@ -726,35 +726,67 @@ export default function AdminPage() {
                                                 <th>Cant.</th>
                                                 <th>Producto</th>
                                                 <th>Unit.</th>
+                                                <th>Costo</th>
+                                                <th>Ganancia</th>
                                                 <th>Subtotal</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {selectedOrder.productos.split(';').map((itemStr, i) => {
-                                                const match = itemStr.match(/(.+)\s\(x(\d+)\)/);
-                                                if (match) {
-                                                    const nombre = match[1].trim();
-                                                    const cantidad = parseInt(match[2]);
-                                                    const prod = allProducts.find(p => p.name === nombre) || allProducts.find(p => p.name.includes(nombre));
-                                                    const unitPrice = prod ? prod.price : 0;
+                                            {(() => {
+                                                let totalGananciaPedido = 0;
+                                                const rows = selectedOrder.productos.split(';').map((itemStr, i) => {
+                                                    const match = itemStr.match(/(.+)\s\(x(\d+)\)/);
+                                                    if (match) {
+                                                        const nombre = match[1].trim();
+                                                        const cantidad = parseInt(match[2]);
+                                                        const prod = allProducts.find(p => p.name === nombre) || allProducts.find(p => p.name.includes(nombre));
+                                                        const unitPrice = prod ? prod.price : 0;
+                                                        const unitCost = prod ? (prod.cost || 0) : 0;
+                                                        const gananciaItem = (unitPrice - unitCost) * cantidad;
+                                                        totalGananciaPedido += gananciaItem;
+
+                                                        return (
+                                                            <tr key={i}>
+                                                                <td style={{ textAlign: 'center' }}>{cantidad}</td>
+                                                                <td>{nombre}</td>
+                                                                <td>${unitPrice.toLocaleString('es-AR')}</td>
+                                                                <td style={{ color: '#666' }}>${unitCost.toLocaleString('es-AR')}</td>
+                                                                <td style={{ 
+                                                                    fontWeight: 600, 
+                                                                    color: gananciaItem >= 0 ? '#16a34a' : '#dc2626' 
+                                                                }}>
+                                                                    ${gananciaItem.toLocaleString('es-AR')}
+                                                                </td>
+                                                                <td style={{ fontWeight: 600 }}>${(unitPrice * cantidad).toLocaleString('es-AR')}</td>
+                                                            </tr>
+                                                        );
+                                                    }
                                                     return (
                                                         <tr key={i}>
-                                                            <td style={{ textAlign: 'center' }}>{cantidad}</td>
-                                                            <td>{nombre}</td>
-                                                            <td>${unitPrice.toLocaleString('es-AR')}</td>
-                                                            <td style={{ fontWeight: 600 }}>${(unitPrice * cantidad).toLocaleString('es-AR')}</td>
+                                                            <td style={{ textAlign: 'center' }}>1</td>
+                                                            <td>{itemStr}</td>
+                                                            <td colSpan={4} style={{ textAlign: 'center', color: '#999' }}>Detalle no disponible para cálculo</td>
                                                         </tr>
                                                     );
-                                                }
+                                                });
+
                                                 return (
-                                                    <tr key={i}>
-                                                        <td style={{ textAlign: 'center' }}>1</td>
-                                                        <td>{itemStr}</td>
-                                                        <td>-</td>
-                                                        <td>-</td>
-                                                    </tr>
+                                                    <>
+                                                        {rows}
+                                                        <tr>
+                                                            <td colSpan={4} style={{ textAlign: 'right', fontWeight: 'bold', paddingTop: '1.5rem' }}>GANANCIA TOTAL:</td>
+                                                            <td colSpan={2} style={{ 
+                                                                paddingTop: '1.5rem',
+                                                                fontSize: '1.2rem',
+                                                                fontWeight: 'bold',
+                                                                color: totalGananciaPedido >= 0 ? '#16a34a' : '#dc2626'
+                                                            }}>
+                                                                ${totalGananciaPedido.toLocaleString('es-AR')}
+                                                            </td>
+                                                        </tr>
+                                                    </>
                                                 );
-                                            })}
+                                            })()}
                                         </tbody>
                                     </table>
                                 </div>

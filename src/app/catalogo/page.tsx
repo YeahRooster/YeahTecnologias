@@ -32,6 +32,7 @@ function CatalogContent() {
     const [minPrice, setMinPrice] = useState<number | ''>('');
     const [maxPrice, setMaxPrice] = useState<number | ''>('');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'default'>('default');
+    const [hideOutOfStock, setHideOutOfStock] = useState(false);
 
     // Estado para el Modal
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -115,8 +116,9 @@ function CatalogContent() {
 
         const matchesMinPrice = minPrice === '' || p.price >= minPrice;
         const matchesMaxPrice = maxPrice === '' || p.price <= maxPrice;
+        const matchesStock = !hideOutOfStock || p.stock > 0;
 
-        return matchesCategory && matchesSearch && matchesMinPrice && matchesMaxPrice;
+        return matchesCategory && matchesSearch && matchesMinPrice && matchesMaxPrice && matchesStock;
     });
 
     if (sortOrder === 'asc') filteredProducts.sort((a, b) => a.price - b.price);
@@ -212,6 +214,19 @@ function CatalogContent() {
                         <option value="asc">Menor Precio</option>
                         <option value="desc">Mayor Precio</option>
                     </select>
+                </div>
+                <div className={styles.switchContainer}>
+                    <span className={styles.switchLabelText}>Ocultar sin stock</span>
+                    <label className={styles.switch}>
+                        <input 
+                            type="checkbox" 
+                            checked={hideOutOfStock}
+                            onChange={e => setHideOutOfStock(e.target.checked)}
+                        />
+                        <span className={styles.slider}>
+                            <span className={styles.sliderKnob}></span>
+                        </span>
+                    </label>
                 </div>
             </div>
 
