@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye, Users, Check, ShieldAlert, ShoppingCart, Plus, Trash2, FileText, UserPlus, CreditCard, RotateCcw } from 'lucide-react';
+import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye, Users, Check, ShieldAlert, ShoppingCart, Plus, Trash2, FileText, UserPlus, CreditCard, RotateCcw, Megaphone, MessageSquare, Download, Mail, Send } from 'lucide-react';
 import styles from './admin.module.css';
 
 interface Order {
@@ -53,7 +53,16 @@ interface PosClient {
 export default function AdminPage() {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios' | 'facturador'>('pedidos');
+    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios' | 'facturador' | 'campañas'>('pedidos');
+
+    // Estados para Campañas
+    const [campaignSubject, setCampaignSubject] = useState('');
+    const [campaignMessage, setCampaignMessage] = useState('');
+    const [campaignTarget, setCampaignTarget] = useState<'todos' | 'habilitados' | 'pendientes'>('habilitados');
+    const [campaignSending, setCampaignSending] = useState(false);
+    const [campaignResult, setCampaignResult] = useState<{ success: number; failed: number } | null>(null);
+    const [whatsappTemplate, setWhatsappTemplate] = useState<'bienvenida' | 'reactivacion' | 'oferta'>('reactivacion');
+    const [whatsappSelectedUser, setWhatsappSelectedUser] = useState<UserAdmin | null>(null);
 
     // Estados para Pedidos
     const [orders, setOrders] = useState<Order[]>([]);
@@ -142,6 +151,9 @@ export default function AdminPage() {
             if (activeTab === 'facturador') {
                 fetchAllProducts();
                 fetchUsers(); // Necesario para el autocompletado de clientes
+            }
+            if (activeTab === 'campañas') {
+                fetchUsers(); // Para WhatsApp y exportador CSV
             }
         }
     }, [isAuthenticated, activeTab]);
@@ -351,6 +363,12 @@ export default function AdminPage() {
                         >
                             <ShoppingCart size={18} /> Facturador
                         </button>
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === 'campañas' ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab('campañas')}
+                        >
+                            <Megaphone size={18} /> Campañas
+                        </button>
                     </nav>
                 </div>
                 <button onClick={() => setIsAuthenticated(false)} className={styles.logoutBtn}>Cerrar Sesión</button>
@@ -445,6 +463,224 @@ export default function AdminPage() {
                         </table>
                     </div>
                 </>
+            ) : activeTab === 'campañas' ? (
+                <div className={styles.campaignContainer}>
+                    <div className={styles.campaignGrid}>
+
+                        {/* === SECCIÓN 1: EMAIL MASIVO === */}
+                        <div className={styles.campaignCard}>
+                            <div className={styles.campaignCardHeader}>
+                                <Mail size={22} color="#ff5722" />
+                                <h2>📧 Envío de Email Masivo</h2>
+                            </div>
+                            <p className={styles.campaignCardDesc}>Enviá un correo personalizado a tus clientes registrados con el diseño oficial de Yeah! Tecnologías.</p>
+
+                            <div className={styles.campaignField}>
+                                <label>👥 Destinatarios</label>
+                                <div className={styles.targetSelector}>
+                                    {(['habilitados', 'pendientes', 'todos'] as const).map(t => (
+                                        <button
+                                            key={t}
+                                            onClick={() => setCampaignTarget(t)}
+                                            className={`${styles.targetBtn} ${campaignTarget === t ? styles.targetBtnActive : ''}`}
+                                        >
+                                            {t === 'habilitados' ? `✅ Habilitados (${users.filter(u => u.habilitado).length})` :
+                                             t === 'pendientes' ? `⌛ Pendientes (${users.filter(u => !u.habilitado).length})` :
+                                             `👥 Todos (${users.length})`}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className={styles.campaignField}>
+                                <label>📌 Asunto del Email</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: ¡Novedades en Yeah! Tecnologías!"
+                                    value={campaignSubject}
+                                    onChange={e => setCampaignSubject(e.target.value)}
+                                    className={styles.campaignInput}
+                                />
+                            </div>
+
+                            <div className={styles.campaignField}>
+                                <label>✍️ Mensaje</label>
+                                <textarea
+                                    placeholder="Escribí el contenido del mensaje. Podés usar varias líneas."
+                                    value={campaignMessage}
+                                    onChange={e => setCampaignMessage(e.target.value)}
+                                    className={styles.campaignTextarea}
+                                    rows={6}
+                                />
+                            </div>
+
+                            {campaignResult && (
+                                <div className={styles.campaignResultBox}>
+                                    <p>✅ Enviados: <strong>{campaignResult.success}</strong></p>
+                                    <p>❌ Fallidos: <strong>{campaignResult.failed}</strong></p>
+                                </div>
+                            )}
+
+                            <button
+                                className={styles.campaignSendBtn}
+                                disabled={campaignSending || !campaignSubject || !campaignMessage}
+                                onClick={async () => {
+                                    setCampaignSending(true);
+                                    setCampaignResult(null);
+                                    const targetEmails = users
+                                        .filter(u => campaignTarget === 'todos' ? true : campaignTarget === 'habilitados' ? u.habilitado : !u.habilitado)
+                                        .map(u => u.email)
+                                        .filter(Boolean);
+                                    try {
+                                        const res = await fetch('/api/admin/campaign', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ emails: targetEmails, subject: campaignSubject, message: campaignMessage, password })
+                                        });
+                                        const data = await res.json();
+                                        setCampaignResult({ success: data.success || 0, failed: data.failed || 0 });
+                                    } catch (e) {
+                                        setCampaignResult({ success: 0, failed: targetEmails.length });
+                                    } finally {
+                                        setCampaignSending(false);
+                                    }
+                                }}
+                            >
+                                {campaignSending ? (
+                                    <><Send size={18} /> Enviando...</>
+                                ) : (
+                                    <><Send size={18} /> Enviar Campaña</>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* === SECCIÓN 2: ASISTENTE WHATSAPP === */}
+                        <div className={styles.campaignCard}>
+                            <div className={styles.campaignCardHeader}>
+                                <MessageSquare size={22} color="#25d366" />
+                                <h2>💬 Asistente de WhatsApp</h2>
+                            </div>
+                            <p className={styles.campaignCardDesc}>Generá mensajes personalizados listos para enviar por WhatsApp con un solo clic.</p>
+
+                            <div className={styles.campaignField}>
+                                <label>📋 Plantilla de Mensaje</label>
+                                <div className={styles.templateSelector}>
+                                    {([
+                                        { id: 'bienvenida', label: '👋 Bienvenida', desc: 'Para clientes nuevos que acaban de registrarse' },
+                                        { id: 'reactivacion', label: '🔄 Reactivación', desc: 'Para clientes que hace tiempo no compran' },
+                                        { id: 'oferta', label: '🎁 Oferta Especial', desc: 'Para comunicar nuevos productos o descuentos' },
+                                    ] as const).map(t => (
+                                        <button
+                                            key={t.id}
+                                            onClick={() => setWhatsappTemplate(t.id)}
+                                            className={`${styles.templateBtn} ${whatsappTemplate === t.id ? styles.templateBtnActive : ''}`}
+                                        >
+                                            <span>{t.label}</span>
+                                            <small>{t.desc}</small>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className={styles.campaignField}>
+                                <label>🙍 Seleccioná un Cliente</label>
+                                <select
+                                    className={styles.campaignInput}
+                                    value={whatsappSelectedUser?.email || ''}
+                                    onChange={e => setWhatsappSelectedUser(users.find(u => u.email === e.target.value) || null)}
+                                >
+                                    <option value="">-- Elegir cliente --</option>
+                                    {users.map(u => (
+                                        <option key={u.email} value={u.email}>
+                                            {u.nombreCompleto} — {u.nombreLocal || 'Sin local'}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {whatsappSelectedUser && (() => {
+                                const nombre = whatsappSelectedUser.nombreCompleto.split(' ')[0];
+                                const local = whatsappSelectedUser.nombreLocal || 'tu negocio';
+                                const templates = {
+                                    bienvenida: `¡Hola ${nombre}! 👋 Te damos la bienvenida a *Yeah! Tecnologías*. Ya tenemos tu registro y en breve te habilitamos el acceso completo al catálogo mayorista online. Mientras tanto podés ver los productos en: https://yeahtecnologias.vercel.app/catalogo ¡Cualquier consulta, estamos acá!`,
+                                    reactivacion: `¡Hola ${nombre}! 😊 Hace un tiempo que no sabemos nada de *${local}*. Queríamos avisarte que renovamos todo el catálogo con productos nuevos y stock actualizado en tiempo real. Podés verlo directo en la web: https://yeahtecnologias.vercel.app/catalogo ¡Te esperamos!`,
+                                    oferta: `¡Hola ${nombre}! 🎁 Buenas noticias para *${local}*: entraron productos nuevos y tenemos ofertas especiales en filamentos, iluminación y accesorios. Entrá al catálogo y descargá la lista de precios actualizada: https://yeahtecnologias.vercel.app/catalogo ¡No te lo perdás!`,
+                                };
+                                const msg = templates[whatsappTemplate];
+                                return (
+                                    <>
+                                        <div className={styles.whatsappPreview}>
+                                            <div className={styles.whatsappPreviewHeader}>Vista previa del mensaje</div>
+                                            <p>{msg}</p>
+                                        </div>
+                                        <a
+                                            href={`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={styles.whatsappBtn}
+                                        >
+                                            <MessageSquare size={18} /> Abrir WhatsApp y Enviar
+                                        </a>
+                                    </>
+                                );
+                            })()}
+                        </div>
+
+                    </div>
+
+                    {/* === SECCIÓN 3: EXPORTADOR CSV === */}
+                    <div className={styles.campaignCard} style={{ marginTop: '1.5rem' }}>
+                        <div className={styles.campaignCardHeader}>
+                            <Download size={22} color="#2563eb" />
+                            <h2>📥 Exportar Base de Clientes (CSV)</h2>
+                        </div>
+                        <p className={styles.campaignCardDesc}>
+                            Descargá toda la base de datos de clientes registrados en un archivo Excel/CSV. Podés usarla para cargar los contactos en tu celular o subirla a Meta Ads para hacer publicidad dirigida.
+                        </p>
+                        <div className={styles.csvPreview}>
+                            <table>
+                                <thead><tr><th>Nombre</th><th>Local</th><th>Email</th><th>CUIT/CUIL</th><th>Registrado</th><th>Estado</th></tr></thead>
+                                <tbody>
+                                    {users.slice(0, 3).map(u => (
+                                        <tr key={u.email}>
+                                            <td>{u.nombreCompleto}</td>
+                                            <td>{u.nombreLocal || '-'}</td>
+                                            <td>{u.email}</td>
+                                            <td>{u.cuitCuil || '-'}</td>
+                                            <td>{u.fechaRegistro || '-'}</td>
+                                            <td>{u.habilitado ? '✅ Habilitado' : '⌛ Pendiente'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {users.length > 3 && <p className={styles.csvMore}>...y {users.length - 3} cliente{users.length - 3 !== 1 ? 's' : ''} más</p>}
+                        </div>
+                        <button
+                            className={styles.csvDownloadBtn}
+                            onClick={() => {
+                                const headers = ['Nombre Completo', 'Nombre Local', 'Email', 'CUIT/CUIL', 'Fecha Registro', 'Estado'];
+                                const rows = users.map(u => [
+                                    u.nombreCompleto,
+                                    u.nombreLocal || '',
+                                    u.email,
+                                    u.cuitCuil || '',
+                                    u.fechaRegistro || '',
+                                    u.habilitado ? 'Habilitado' : 'Pendiente'
+                                ]);
+                                const csvContent = [headers, ...rows].map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+                                const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `clientes-yeah-${new Date().toLocaleDateString('es-AR').replace(/\//g, '-')}.csv`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                            }}
+                        >
+                            <Download size={18} /> Descargar {users.length} Clientes en CSV
+                        </button>
+                    </div>
+                </div>
             ) : (
                 <div className={styles.posContainer}>
                     {/* CABECERA EXCLUSIVA IMPRESIÓN */}

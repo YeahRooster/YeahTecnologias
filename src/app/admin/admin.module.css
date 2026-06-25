@@ -856,3 +856,335 @@
 .printProductText {
   display: none;
 }
+
+/* =============================================
+   MÓDULO DE CAMPAÑAS
+   ============================================= */
+.campaignContainer {
+  margin-top: 1rem;
+}
+
+.campaignGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.campaignCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.75rem;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.campaignCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.campaignCardHeader h2 {
+  font-size: 1.15rem;
+  color: var(--primary);
+  font-weight: 700;
+  margin: 0;
+}
+
+.campaignCardDesc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.campaignField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.campaignField label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.campaignInput {
+  width: 100%;
+  padding: 0.65rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: white;
+}
+
+.campaignInput:focus {
+  outline: none;
+  border-color: #5c5ca8;
+  box-shadow: 0 0 0 3px rgba(92, 92, 168, 0.1);
+}
+
+.campaignTextarea {
+  width: 100%;
+  padding: 0.65rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: white;
+  line-height: 1.6;
+}
+
+.campaignTextarea:focus {
+  outline: none;
+  border-color: #5c5ca8;
+  box-shadow: 0 0 0 3px rgba(92, 92, 168, 0.1);
+}
+
+/* Selector de destinatarios */
+.targetSelector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.targetBtn {
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: white;
+  transition: all 0.2s;
+}
+
+.targetBtn:hover {
+  border-color: #ff5722;
+  color: #ff5722;
+}
+
+.targetBtnActive {
+  background-color: #ff5722;
+  border-color: #ff5722;
+  color: white;
+}
+
+/* Botón de envío de campaña */
+.campaignSendBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  background: linear-gradient(135deg, #ff5722, #e64a19);
+  color: white;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  margin-top: auto;
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+}
+
+.campaignSendBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(255, 87, 34, 0.4);
+}
+
+.campaignSendBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Resultado del envío */
+.campaignResultBox {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1rem;
+  display: flex;
+  gap: 1.5rem;
+}
+
+.campaignResultBox p {
+  font-size: 0.9rem;
+  color: #166534;
+  margin: 0;
+}
+
+/* Selector de plantillas de WhatsApp */
+.templateSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.templateBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: white;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.templateBtn span {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.templateBtn small {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.templateBtn:hover {
+  border-color: #25d366;
+}
+
+.templateBtnActive {
+  background-color: #f0fdf4;
+  border-color: #25d366;
+  color: #166534;
+}
+
+.templateBtnActive span {
+  color: #166534;
+}
+
+/* Vista previa de WhatsApp */
+.whatsappPreview {
+  background: #e7fce8;
+  border-radius: 12px;
+  border: 1px solid #bbf7d0;
+  overflow: hidden;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.whatsappPreviewHeader {
+  background: #25d366;
+  color: white;
+  padding: 0.4rem 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.whatsappPreview p {
+  padding: 0.875rem;
+  margin: 0;
+  color: #1a1a1a;
+  white-space: pre-line;
+}
+
+/* Botón de abrir WhatsApp */
+.whatsappBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  color: white;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.whatsappBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(37, 211, 102, 0.4);
+  color: white;
+}
+
+/* Vista previa del CSV */
+.csvPreview {
+  background: #f8fafc;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  overflow: auto;
+}
+
+.csvPreview table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.csvPreview th {
+  background: var(--primary);
+  color: white;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.csvPreview td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.csvMore {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 0;
+}
+
+/* Botón de descarga CSV */
+.csvDownloadBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  margin-top: auto;
+}
+
+.csvDownloadBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
+}
+
+@media (max-width: 900px) {
+  .campaignGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -344,3 +344,60 @@ export async function sendActivationEmail(email: string, customerName: string) {
     return false;
   }
 }
+
+export async function sendCampaignEmail(emails: string[], subject: string, htmlContent: string) {
+  const fromUser = 'yeah.tecnologias@gmail.com';
+  
+  const styledHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #0a0a1a 0%, #5c5ca8 100%); color: white; padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #ffffff; padding: 30px 20px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .footer { margin-top: 30px; font-size: 0.85em; color: #64748b; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+        .btn { display: inline-block; padding: 12px 24px; background-color: #ff5722; color: white !important; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Yeah! Tecnologías</h1>
+          <p>Novedades y Ofertas Mayoristas</p>
+        </div>
+        <div class="content">
+          ${htmlContent.replace(/\n/g, '<br>')}
+          <div style="text-align: center;">
+            <a href="https://yeahtecnologias.vercel.app/catalogo" class="btn">Visitar Catálogo Online</a>
+          </div>
+          <div class="footer">
+            <p>Este es un email informativo enviado a clientes registrados en Yeah! Tecnologías.</p>
+            <p>Av. Principal, Buenos Aires, Argentina.</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const results = { success: 0, failed: 0 };
+  for (const email of emails) {
+    const mailOptions = {
+      from: `"Yeah! Tecnologías" <${fromUser}>`,
+      to: email,
+      subject: subject,
+      html: styledHtml,
+    };
+    try {
+      await transporter.sendMail(mailOptions);
+      results.success++;
+      console.log(`✅ [CAMP-EMAIL] Enviado a: ${email}`);
+    } catch (error) {
+      console.error(`❌ [CAMP-EMAIL] Error enviando a ${email}:`, error);
+      results.failed++;
+    }
+  }
+  return results;
+}
