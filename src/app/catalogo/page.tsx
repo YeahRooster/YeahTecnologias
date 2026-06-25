@@ -236,8 +236,8 @@ function CatalogContent() {
                 {/* COLUMNA PRODUCTOS */}
                 <div>
                     <div className={styles.productsGrid}>
-                        {filteredProducts.map(product => (
-                            <div key={product.id} onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
+                        {filteredProducts.map((product, index) => (
+                            <div key={`${product.id}-${index}`} onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
                                 <ProductCard product={product} isAuthorized={isAuthorized} />
                             </div>
                         ))}
