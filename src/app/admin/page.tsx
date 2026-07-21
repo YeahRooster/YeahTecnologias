@@ -53,7 +53,28 @@ interface PosClient {
 export default function AdminPage() {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios' | 'facturador' | 'campañas'>('pedidos');
+    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios' | 'facturador' | 'campañas' | 'rma'>('pedidos');
+
+    // Estados para RMA Admin
+    interface RmaAdmin {
+        idRma: string;
+        email: string;
+        producto: string;
+        nroSerie: string;
+        falla: string;
+        fechaCompra: string;
+        observaciones: string;
+        estado: string;
+        fecha: string;
+    }
+    const [rmas, setRmas] = useState<RmaAdmin[]>([]);
+    const [loadingRma, setLoadingRma] = useState(false);
+    const [selectedRma, setSelectedRma] = useState<RmaAdmin | null>(null);
+    const [newRmaStatus, setNewRmaStatus] = useState('');
+    const [updatingRma, setUpdatingRma] = useState(false);
+    const [rmaUpdateMessage, setRmaUpdateMessage] = useState('');
+    const [rmaSearchTerm, setRmaSearchTerm] = useState('');
+    const [rmaFilterEstado, setRmaFilterEstado] = useState('Todos');
 
     // Estados para Campañas
     const [campaignSubject, setCampaignSubject] = useState('');
@@ -155,8 +176,51 @@ export default function AdminPage() {
             if (activeTab === 'campañas') {
                 fetchUsers(); // Para WhatsApp y exportador CSV
             }
+            if (activeTab === 'rma') {
+                fetchRmas();
+            }
         }
     }, [isAuthenticated, activeTab]);
+
+    const fetchRmas = async () => {
+        setLoadingRma(true);
+        try {
+            const res = await fetch(`/api/admin/rma?password=${encodeURIComponent(password)}`);
+            if (res.ok) {
+                const data = await res.json();
+                setRmas(data.rmas || []);
+            }
+        } catch (e) {
+            console.error('Error fetching RMAs:', e);
+        } finally {
+            setLoadingRma(false);
+        }
+    };
+
+    const handleUpdateRmaStatus = async () => {
+        if (!selectedRma) return;
+        setUpdatingRma(true);
+        setRmaUpdateMessage('');
+        try {
+            const res = await fetch('/api/admin/rma', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rmaId: selectedRma.idRma, status: newRmaStatus, password })
+            });
+            if (res.ok) {
+                setRmaUpdateMessage('✅ Estado de RMA actualizado');
+                setRmas(rmas.map(r => r.idRma === selectedRma.idRma ? { ...r, estado: newRmaStatus } : r));
+                setTimeout(() => setSelectedRma(null), 1500);
+            } else {
+                const data = await res.json();
+                setRmaUpdateMessage(`❌ Error: ${data.error}`);
+            }
+        } catch (e) {
+            setRmaUpdateMessage('❌ Error de conexión');
+        } finally {
+            setUpdatingRma(false);
+        }
+    };
 
     // --- POS HANDLERS ---
     const handleAddRow = () => {
@@ -368,6 +432,12 @@ export default function AdminPage() {
                             onClick={() => setActiveTab('campañas')}
                         >
                             <Megaphone size={18} /> Campañas
+                        </button>
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === 'rma' ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab('rma')}
+                        >
+                            <ShieldAlert size={18} /> RMA / Garantías
                         </button>
                     </nav>
                 </div>
@@ -679,6 +749,86 @@ export default function AdminPage() {
                         >
                             <Download size={18} /> Descargar {users.length} Clientes en CSV
                         </button>
+                    </div>
+                </div>
+            ) : activeTab === 'rma' ? (
+                <div className={styles.rmaAdminContainer}>
+                    <div className={styles.controls}>
+                        <div className={styles.searchBar}>
+                            <Search size={20} />
+                            <input
+                                type="text"
+                                placeholder="Buscar RMA por ID, producto o cliente..."
+                                value={rmaSearchTerm}
+                                onChange={e => setRmaSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className={styles.filters}>
+                            {['Todos', 'Pendiente', 'En Revisión', 'Cambiado', 'Devuelto'].map(e => (
+                                <button
+                                    key={e}
+                                    onClick={() => setRmaFilterEstado(e)}
+                                    className={rmaFilterEstado === e ? styles.activeFilter : ''}
+                                >
+                                    {e}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className={styles.ordersTable}>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID RMA</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Producto</th>
+                                    <th>Nro Serie</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rmas
+                                    .filter(r =>
+                                        (r.idRma.toLowerCase().includes(rmaSearchTerm.toLowerCase()) ||
+                                         r.producto.toLowerCase().includes(rmaSearchTerm.toLowerCase()) ||
+                                         r.email.toLowerCase().includes(rmaSearchTerm.toLowerCase())) &&
+                                        (rmaFilterEstado === 'Todos' || r.estado === rmaFilterEstado)
+                                    )
+                                    .map(rma => (
+                                        <tr key={rma.idRma} onClick={() => {
+                                            setSelectedRma(rma);
+                                            setNewRmaStatus(rma.estado);
+                                            setRmaUpdateMessage('');
+                                        }}>
+                                            <td><strong style={{fontFamily:'monospace'}}>{rma.idRma}</strong></td>
+                                            <td>{rma.fecha}</td>
+                                            <td>{rma.email}</td>
+                                            <td><strong>{rma.producto}</strong></td>
+                                            <td style={{color:'#64748b'}}>{rma.nroSerie}</td>
+                                            <td>
+                                                <span className={`${styles.badge} ${
+                                                    rma.estado === 'En Revisión' ? styles.preparado :
+                                                    rma.estado === 'Cambiado' ? styles.entregado :
+                                                    rma.estado === 'Devuelto' ? styles.cancelado :
+                                                    styles.pendiente
+                                                }`}>
+                                                    {rma.estado}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                }
+                                {rmas.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} style={{textAlign:'center', padding:'3rem', color:'#94a3b8'}}>
+                                            No hay solicitudes de RMA registradas
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             ) : (
@@ -1064,6 +1214,65 @@ export default function AdminPage() {
                                 >
                                     <FileText size={18} /> Ver Comprobante
                                 </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* MODAL DETALLE DE RMA PARA ADMIN */}
+            {selectedRma && (
+                <div className={styles.modalOverlay} onClick={() => setSelectedRma(null)}>
+                    <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <div>
+                                <h2>Detalle de RMA {selectedRma.idRma}</h2>
+                                <p className={styles.modalDate}>Fecha Solicitud: {selectedRma.fecha}</p>
+                            </div>
+                            <button className={styles.closeBtn} onClick={() => setSelectedRma(null)}><X size={24} /></button>
+                        </div>
+                        <div className={styles.modalContent}>
+                            <div className={styles.detailSection}>
+                                <h3>Información General</h3>
+                                <div className={styles.detailGrid} style={{gridTemplateColumns:'1fr'}}>
+                                    <p><strong>Cliente:</strong> {selectedRma.email}</p>
+                                    <p><strong>Producto:</strong> {selectedRma.producto}</p>
+                                    <p><strong>Nro. de Serie:</strong> {selectedRma.nroSerie}</p>
+                                    <p><strong>Fecha de Compra declarada:</strong> {selectedRma.fechaCompra}</p>
+                                </div>
+                            </div>
+
+                            <div className={styles.detailSection}>
+                                <h3>Descripción de la Falla</h3>
+                                <div style={{padding:'1rem', background:'#f8fafc', borderRadius:'var(--radius-md)', border:'1px solid var(--border)', whiteSpace:'pre-wrap', lineHeight:1.6}}>
+                                    {selectedRma.falla}
+                                </div>
+                            </div>
+
+                            <div className={styles.detailSection}>
+                                <h3>Observaciones adicionales</h3>
+                                <div style={{padding:'1rem', background:'#f8fafc', borderRadius:'var(--radius-md)', border:'1px solid var(--border)', whiteSpace:'pre-wrap', lineHeight:1.6}}>
+                                    {selectedRma.observaciones}
+                                </div>
+                            </div>
+
+                            <div className={styles.statusControl} style={{background:'#eff6ff', borderColor:'#bfdbfe'}}>
+                                <h3 style={{color:'#1e3a8a'}}>Actualizar Estado RMA</h3>
+                                <div className={styles.statusSelect}>
+                                    <select value={newRmaStatus} onChange={e => setNewRmaStatus(e.target.value)} style={{borderColor:'#bfdbfe'}}>
+                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="En Revisión">En Revisión</option>
+                                        <option value="Cambiado">Cambiado</option>
+                                        <option value="Devuelto">Devuelto</option>
+                                    </select>
+                                    <button onClick={handleUpdateRmaStatus} className={styles.updateBtn} style={{backgroundColor:'#2563eb'}} disabled={updatingRma}>
+                                        {updatingRma ? 'Guardando...' : 'Actualizar Estado'}
+                                    </button>
+                                </div>
+                                {rmaUpdateMessage && (
+                                    <p style={{ marginTop: '0.5rem', fontWeight: 600, color: rmaUpdateMessage.includes('✅') ? 'green' : 'red' }}>
+                                        {rmaUpdateMessage}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>

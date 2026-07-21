@@ -465,3 +465,118 @@ export async function createStockAlert(email: string, productName: string): Prom
 
   return true;
 }
+
+// =============================================
+// RMA - GESTIÓN DE GARANTÍAS Y DEVOLUCIONES
+// =============================================
+
+export interface Rma {
+  idRma: string;
+  email: string;
+  producto: string;
+  nroSerie: string;
+  falla: string;
+  fechaCompra: string;
+  observaciones: string;
+  estado: string;
+  fecha: string;
+}
+
+async function getRmaSheet() {
+  const doc = await getDoc();
+  let rmaSheet = doc.sheetsByTitle['RMA'];
+
+  if (!rmaSheet) {
+    try {
+      rmaSheet = await doc.addSheet({
+        title: 'RMA',
+        headerValues: ['ID RMA', 'Email', 'Producto', 'NroSerie', 'Falla', 'FechaCompra', 'Observaciones', 'Estado', 'Fecha']
+      });
+      console.log('✅ Hoja RMA creada automáticamente');
+    } catch (e) {
+      console.error('❌ No se pudo crear la hoja RMA:', e);
+      throw new Error('No se encontró ni se pudo crear la hoja RMA');
+    }
+  }
+
+  return rmaSheet;
+}
+
+// Crear un nuevo RMA
+export async function createRma(data: Omit<Rma, 'idRma' | 'fecha' | 'estado'>): Promise<string> {
+  const sheet = await getRmaSheet();
+  const idRma = `RMA-${Date.now()}`;
+  const fecha = new Date().toLocaleDateString('es-AR');
+
+  await sheet.addRow({
+    'ID RMA': idRma,
+    'Email': data.email,
+    'Producto': data.producto,
+    'NroSerie': data.nroSerie || '-',
+    'Falla': data.falla,
+    'FechaCompra': data.fechaCompra || '-',
+    'Observaciones': data.observaciones || '-',
+    'Estado': 'Pendiente',
+    'Fecha': fecha,
+  });
+
+  return idRma;
+}
+
+// Obtener los RMA de un cliente
+export async function getRmaByEmail(email: string): Promise<Rma[]> {
+  const sheet = await getRmaSheet();
+  const rows = await sheet.getRows();
+
+  return rows
+    .filter(row => (row.get('Email') || '').toLowerCase() === email.toLowerCase())
+    .map(row => ({
+      idRma: row.get('ID RMA') || '',
+      email: row.get('Email') || '',
+      producto: row.get('Producto') || '',
+      nroSerie: row.get('NroSerie') || '-',
+      falla: row.get('Falla') || '',
+      fechaCompra: row.get('FechaCompra') || '-',
+      observaciones: row.get('Observaciones') || '-',
+      estado: row.get('Estado') || 'Pendiente',
+      fecha: row.get('Fecha') || '',
+    }))
+    .reverse();
+}
+
+// Obtener TODOS los RMA (para admin)
+export async function getAllRmas(): Promise<Rma[]> {
+  const sheet = await getRmaSheet();
+  const rows = await sheet.getRows();
+
+  return rows.map(row => ({
+    idRma: row.get('ID RMA') || '',
+    email: row.get('Email') || '',
+    producto: row.get('Producto') || '',
+    nroSerie: row.get('NroSerie') || '-',
+    falla: row.get('Falla') || '',
+    fechaCompra: row.get('FechaCompra') || '-',
+    observaciones: row.get('Observaciones') || '-',
+    estado: row.get('Estado') || 'Pendiente',
+    fecha: row.get('Fecha') || '',
+  })).reverse();
+}
+
+// Actualizar estado de un RMA
+export async function updateRmaStatus(rmaId: string, newStatus: string): Promise<boolean> {
+  const sheet = await getRmaSheet();
+  const rows = await sheet.getRows();
+  const rmaRow = rows.find(row => row.get('ID RMA') === rmaId);
+
+  if (!rmaRow) return false;
+
+  rmaRow.set('Estado', newStatus);
+  await rmaRow.save();
+
+  // Limpiar caché
+  cachedDoc = null;
+  lastConnectionTime = 0;
+
+  return true;
+}
+
