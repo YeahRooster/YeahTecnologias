@@ -580,3 +580,119 @@ export async function updateRmaStatus(rmaId: string, newStatus: string): Promise
   return true;
 }
 
+// =============================================
+// BANNERS - PÁGINA PRINCIPAL
+// =============================================
+
+export interface Banner {
+  id: string;
+  imagenUrl: string;
+  titulo: string;
+  descripcion: string;
+  link: string;
+  textoBoton: string;
+  activo: boolean;
+}
+
+async function getBannersSheet() {
+  const doc = await getDoc();
+  let bannersSheet = doc.sheetsByTitle['Banners'];
+
+  if (!bannersSheet) {
+    try {
+      bannersSheet = await doc.addSheet({
+        title: 'Banners',
+        headerValues: ['ID', 'ImagenURL', 'Titulo', 'Descripcion', 'Link', 'TextoBoton', 'Activo']
+      });
+      console.log('✅ Hoja Banners creada automáticamente');
+      
+      // Auto-populate with default banners so they don't disappear
+      await bannersSheet.addRow({ 'ID': '3', 'ImagenURL': '/banners/peripherals.png', 'Titulo': 'PERIFÉRICOS & AUDIO', 'Descripcion': 'Equipá tu negocio con las mejores marcas en teclados, mouse y sonido.', 'Link': '/catalogo?categoria=Perifericos', 'TextoBoton': 'Ver Productos', 'Activo': 'Si' });
+      await bannersSheet.addRow({ 'ID': '2', 'ImagenURL': '/banners/social_media.png', 'Titulo': 'SEGUINOS EN REDES', 'Descripcion': 'Enterate antes que nadie de los nuevos ingresos y sorteos.', 'Link': 'https://www.instagram.com/yeahtecnologias/', 'TextoBoton': 'Ir a Instagram', 'Activo': 'Si' });
+      
+    } catch (e) {
+      console.error('❌ No se pudo crear la hoja Banners:', e);
+      throw new Error('No se encontró ni se pudo crear la hoja Banners');
+    }
+  }
+
+  return bannersSheet;
+}
+
+// Obtener todos los banners
+export async function getAllBanners(): Promise<Banner[]> {
+  const sheet = await getBannersSheet();
+  const rows = await sheet.getRows();
+
+  return rows.map(row => ({
+    id: row.get('ID') || '',
+    imagenUrl: row.get('ImagenURL') || '',
+    titulo: row.get('Titulo') || '',
+    descripcion: row.get('Descripcion') || '',
+    link: row.get('Link') || '',
+    textoBoton: row.get('TextoBoton') || '',
+    activo: (row.get('Activo') || 'Si').toLowerCase() === 'si',
+  }));
+}
+
+// Crear un nuevo banner
+export async function createBanner(data: Omit<Banner, 'id'>): Promise<string> {
+  const sheet = await getBannersSheet();
+  const idBanner = `BAN-${Date.now()}`;
+
+  await sheet.addRow({
+    'ID': idBanner,
+    'ImagenURL': data.imagenUrl,
+    'Titulo': data.titulo || '',
+    'Descripcion': data.descripcion || '',
+    'Link': data.link || '',
+    'TextoBoton': data.textoBoton || 'Ver Más',
+    'Activo': data.activo ? 'Si' : 'No',
+  });
+
+  cachedDoc = null;
+  lastConnectionTime = 0;
+
+  return idBanner;
+}
+
+// Actualizar banner
+export async function updateBanner(id: string, updates: Partial<Banner>): Promise<boolean> {
+  const sheet = await getBannersSheet();
+  const rows = await sheet.getRows();
+  const row = rows.find(r => r.get('ID') === id);
+
+  if (!row) return false;
+
+  if (updates.imagenUrl !== undefined) row.set('ImagenURL', updates.imagenUrl);
+  if (updates.titulo !== undefined) row.set('Titulo', updates.titulo);
+  if (updates.descripcion !== undefined) row.set('Descripcion', updates.descripcion);
+  if (updates.link !== undefined) row.set('Link', updates.link);
+  if (updates.textoBoton !== undefined) row.set('TextoBoton', updates.textoBoton);
+  if (updates.activo !== undefined) row.set('Activo', updates.activo ? 'Si' : 'No');
+
+  await row.save();
+
+  cachedDoc = null;
+  lastConnectionTime = 0;
+
+  return true;
+}
+
+// Eliminar banner
+export async function deleteBanner(id: string): Promise<boolean> {
+  const sheet = await getBannersSheet();
+  const rows = await sheet.getRows();
+  const row = rows.find(r => r.get('ID') === id);
+
+  if (!row) return false;
+
+  await row.delete();
+
+  cachedDoc = null;
+  lastConnectionTime = 0;
+
+  return true;
+}
+
+

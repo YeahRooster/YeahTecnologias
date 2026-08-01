@@ -24,11 +24,13 @@ interface Product {
 function CatalogContent() {
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get('buscar') || '';
+    const searchTag = searchParams.get('tag') || '';
+    const searchCategoria = searchParams.get('categoria') || 'Todas';
 
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
+    const [selectedCategory, setSelectedCategory] = useState<string>(searchCategoria);
     const [minPrice, setMinPrice] = useState<number | ''>('');
     const [maxPrice, setMaxPrice] = useState<number | ''>('');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'default'>('default');
@@ -113,12 +115,15 @@ function CatalogContent() {
         const matchesSearch = !searchQuery ||
             p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             p.description.toLowerCase().includes(searchQuery.toLowerCase());
+            
+        const matchesTag = !searchTag || 
+            (p.tags && p.tags.some(t => t.toLowerCase() === searchTag.toLowerCase()));
 
         const matchesMinPrice = minPrice === '' || p.price >= minPrice;
         const matchesMaxPrice = maxPrice === '' || p.price <= maxPrice;
         const matchesStock = !hideOutOfStock || p.stock > 0;
 
-        return matchesCategory && matchesSearch && matchesMinPrice && matchesMaxPrice && matchesStock;
+        return matchesCategory && matchesSearch && matchesTag && matchesMinPrice && matchesMaxPrice && matchesStock;
     });
 
     if (sortOrder === 'asc') filteredProducts.sort((a, b) => a.price - b.price);
@@ -138,7 +143,7 @@ function CatalogContent() {
             {/* Header */}
             <div className={styles.catalogHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <h1 className="section-title" style={{ textAlign: 'left', marginBottom: 0 }}>
-                    {searchQuery ? `Búsqueda: "${searchQuery}"` : 'Catálogo Mayorista'}
+                    {searchQuery ? `Búsqueda: "${searchQuery}"` : searchTag ? `Etiqueta: "${searchTag}"` : 'Catálogo Mayorista'}
                 </h1>
 
                 {isAuthorized && (

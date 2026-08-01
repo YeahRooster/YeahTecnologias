@@ -53,7 +53,22 @@ interface PosClient {
 export default function AdminPage() {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios' | 'facturador' | 'campañas' | 'rma'>('pedidos');
+    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios' | 'facturador' | 'campañas' | 'rma' | 'banners'>('pedidos');
+
+    // Estados para Banners
+    interface BannerAdmin {
+        id: string;
+        imagenUrl: string;
+        titulo: string;
+        descripcion: string;
+        link: string;
+        textoBoton: string;
+        activo: boolean;
+    }
+    const [adminBanners, setAdminBanners] = useState<BannerAdmin[]>([]);
+    const [loadingBanners, setLoadingBanners] = useState(false);
+    const [newBanner, setNewBanner] = useState({ imagenUrl: '', titulo: '', descripcion: '', link: '', textoBoton: 'Ver Más', activo: true });
+    const [isSavingBanner, setIsSavingBanner] = useState(false);
 
     // Estados para RMA Admin
     interface RmaAdmin {
@@ -163,6 +178,21 @@ export default function AdminPage() {
         }
     };
 
+    const fetchBannersAdmin = async () => {
+        setLoadingBanners(true);
+        try {
+            const res = await fetch(`/api/admin/banners?password=${encodeURIComponent(password)}`);
+            if (res.ok) {
+                const data = await res.json();
+                setAdminBanners(data.banners || []);
+            }
+        } catch (e) {
+            console.error('Error fetching banners:', e);
+        } finally {
+            setLoadingBanners(false);
+        }
+    };
+
     useEffect(() => {
         if (isAuthenticated) {
             if (activeTab === 'usuarios') fetchUsers();
@@ -178,6 +208,9 @@ export default function AdminPage() {
             }
             if (activeTab === 'rma') {
                 fetchRmas();
+            }
+            if (activeTab === 'banners') {
+                fetchBannersAdmin();
             }
         }
     }, [isAuthenticated, activeTab]);
@@ -219,6 +252,62 @@ export default function AdminPage() {
             setRmaUpdateMessage('❌ Error de conexión');
         } finally {
             setUpdatingRma(false);
+        }
+    };
+
+    const handleSaveBanner = async () => {
+        if (!newBanner.imagenUrl) return alert('Debes agregar al menos la URL de la imagen.');
+        
+        setIsSavingBanner(true);
+        try {
+            const res = await fetch('/api/admin/banners', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password, banner: newBanner })
+            });
+            if (res.ok) {
+                alert('Banner creado correctamente');
+                setNewBanner({ imagenUrl: '', titulo: '', descripcion: '', link: '', textoBoton: 'Ver Más', activo: true });
+                fetchBannersAdmin();
+            } else {
+                alert('Error al crear banner');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error de conexión');
+        } finally {
+            setIsSavingBanner(false);
+        }
+    };
+
+    const handleToggleBanner = async (id: string, currentStatus: boolean) => {
+        try {
+            const res = await fetch('/api/admin/banners', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password, id, updates: { activo: !currentStatus } })
+            });
+            if (res.ok) {
+                fetchBannersAdmin();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const handleDeleteBanner = async (id: string) => {
+        if (!confirm('¿Seguro que deseas eliminar este banner?')) return;
+        try {
+            const res = await fetch('/api/admin/banners', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password, id })
+            });
+            if (res.ok) {
+                fetchBannersAdmin();
+            }
+        } catch (e) {
+            console.error(e);
         }
     };
 
@@ -438,6 +527,12 @@ export default function AdminPage() {
                             onClick={() => setActiveTab('rma')}
                         >
                             <ShieldAlert size={18} /> RMA / Garantías
+                        </button>
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === 'banners' ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab('banners')}
+                        >
+                            <img src="/ads/rooster_banner.png" alt="Banners" style={{width: 18, height: 18, objectFit: 'contain'}} /> Banners
                         </button>
                     </nav>
                 </div>
@@ -749,6 +844,106 @@ export default function AdminPage() {
                         >
                             <Download size={18} /> Descargar {users.length} Clientes en CSV
                         </button>
+                    </div>
+                </div>
+            ) : activeTab === 'banners' ? (
+                <div className={styles.campaignContainer}>
+                    <div className={styles.campaignGrid}>
+                        {/* SECCIÓN 1: Crear nuevo Banner */}
+                        <div className={styles.campaignCard}>
+                            <div className={styles.campaignCardHeader}>
+                                <h2>🖼️ Agregar Nuevo Banner</h2>
+                            </div>
+                            <p className={styles.campaignCardDesc}>
+                                Podés subir la imagen a un servicio gratuito como Imgur o colocarla en la carpeta <code>public/banners/</code> y usar <code>/banners/mi-imagen.png</code>.
+                            </p>
+                            
+                            <div className={styles.campaignField}>
+                                <label>URL de la Imagen (Obligatorio)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: https://i.imgur.com/tu-imagen.jpg o /banners/dia-nino.png"
+                                    value={newBanner.imagenUrl}
+                                    onChange={e => setNewBanner({ ...newBanner, imagenUrl: e.target.value })}
+                                    className={styles.campaignInput}
+                                />
+                            </div>
+                            <div className={styles.campaignField}>
+                                <label>Link de destino (Opcional)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: /catalogo?tag=niño"
+                                    value={newBanner.link}
+                                    onChange={e => setNewBanner({ ...newBanner, link: e.target.value })}
+                                    className={styles.campaignInput}
+                                />
+                            </div>
+                            <div className={styles.campaignField}>
+                                <label>Título (Opcional)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Título del banner"
+                                    value={newBanner.titulo}
+                                    onChange={e => setNewBanner({ ...newBanner, titulo: e.target.value })}
+                                    className={styles.campaignInput}
+                                />
+                            </div>
+                            <div className={styles.campaignField}>
+                                <label>Descripción (Opcional)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Descripción corta"
+                                    value={newBanner.descripcion}
+                                    onChange={e => setNewBanner({ ...newBanner, descripcion: e.target.value })}
+                                    className={styles.campaignInput}
+                                />
+                            </div>
+                            
+                            <button
+                                className={styles.campaignSendBtn}
+                                onClick={handleSaveBanner}
+                                disabled={isSavingBanner || !newBanner.imagenUrl}
+                                style={{ marginTop: '1rem' }}
+                            >
+                                {isSavingBanner ? 'Guardando...' : 'Crear Banner'}
+                            </button>
+                        </div>
+                        
+                        {/* SECCIÓN 2: Lista de Banners */}
+                        <div className={styles.campaignCard}>
+                            <div className={styles.campaignCardHeader}>
+                                <h2>📊 Banners Actuales</h2>
+                            </div>
+                            
+                            {loadingBanners ? <p>Cargando banners...</p> : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                                    {adminBanners.length === 0 && <p>No hay banners creados.</p>}
+                                    {adminBanners.map(b => (
+                                        <div key={b.id} style={{ display: 'flex', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px', gap: '15px', alignItems: 'center' }}>
+                                            <img src={b.imagenUrl} alt="Banner" style={{ width: '120px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: 'bold' }}>{b.titulo || 'Sin título'}</div>
+                                                <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Link: {b.link || 'Ninguno'}</div>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <button 
+                                                    onClick={() => handleToggleBanner(b.id, b.activo)}
+                                                    className={b.activo ? styles.btnHabilitado : styles.btnDeshabilitado}
+                                                >
+                                                    {b.activo ? 'Activo' : 'Oculto'}
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDeleteBanner(b.id)}
+                                                    style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px', cursor: 'pointer' }}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             ) : activeTab === 'rma' ? (
