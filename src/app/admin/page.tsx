@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye, Users, Check, ShieldAlert, ShoppingCart, Plus, Trash2, FileText, UserPlus, CreditCard, RotateCcw, Megaphone, MessageSquare, Download, Mail, Send } from 'lucide-react';
+import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye, Users, Check, ShieldAlert, ShoppingCart, Plus, Trash2, FileText, UserPlus, CreditCard, RotateCcw, Megaphone, MessageSquare, Download, Mail, Send, Edit3, GripVertical } from 'lucide-react';
 import styles from './admin.module.css';
 
 interface Order {
@@ -69,6 +69,9 @@ export default function AdminPage() {
     const [loadingBanners, setLoadingBanners] = useState(false);
     const [newBanner, setNewBanner] = useState({ imagenUrl: '', titulo: '', descripcion: '', link: '', textoBoton: 'Ver Más', activo: true });
     const [isSavingBanner, setIsSavingBanner] = useState(false);
+    const [editingBannerId, setEditingBannerId] = useState<string | null>(null);
+    const [dragIndex, setDragIndex] = useState<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
     // Estados para RMA Admin
     interface RmaAdmin {
@@ -308,6 +311,48 @@ export default function AdminPage() {
             }
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    const handleEditBanner = (b: BannerAdmin) => {
+        setEditingBannerId(b.id);
+        setNewBanner({ imagenUrl: b.imagenUrl, titulo: b.titulo, descripcion: b.descripcion, link: b.link, textoBoton: b.textoBoton, activo: b.activo });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleSaveEditBanner = async () => {
+        if (!editingBannerId) return;
+        setIsSavingBanner(true);
+        try {
+            const res = await fetch('/api/admin/banners', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password, id: editingBannerId, updates: newBanner })
+            });
+            if (res.ok) {
+                setEditingBannerId(null);
+                setNewBanner({ imagenUrl: '', titulo: '', descripcion: '', link: '', textoBoton: 'Ver Más', activo: true });
+                fetchBannersAdmin();
+            } else {
+                alert('Error al guardar los cambios');
+            }
+        } catch (e) {
+            alert('Error de conexión');
+        } finally {
+            setIsSavingBanner(false);
+        }
+    };
+
+    const handleReorderBanners = async (newOrder: BannerAdmin[]) => {
+        setAdminBanners(newOrder);
+        try {
+            await fetch('/api/admin/banners', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password, idList: newOrder.map(b => b.id) })
+            });
+        } catch (e) {
+            console.error('Error al reordenar banners:', e);
         }
     };
 
@@ -898,45 +943,135 @@ export default function AdminPage() {
                                     className={styles.campaignInput}
                                 />
                             </div>
-                            
-                            <button
-                                className={styles.campaignSendBtn}
-                                onClick={handleSaveBanner}
-                                disabled={isSavingBanner || !newBanner.imagenUrl}
-                                style={{ marginTop: '1rem' }}
-                            >
-                                {isSavingBanner ? 'Guardando...' : 'Crear Banner'}
-                            </button>
+
+                            {/* Botones del formulario: Crear o Guardar edición */}
+                            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                                <button
+                                    className={styles.campaignSendBtn}
+                                    onClick={editingBannerId ? handleSaveEditBanner : handleSaveBanner}
+                                    disabled={isSavingBanner || !newBanner.imagenUrl}
+                                    style={{ flex: 1 }}
+                                >
+                                    {isSavingBanner
+                                        ? 'Guardando...'
+                                        : editingBannerId ? '💾 Guardar Cambios' : '➕ Crear Banner'}
+                                </button>
+                                {editingBannerId && (
+                                    <button
+                                        onClick={() => {
+                                            setEditingBannerId(null);
+                                            setNewBanner({ imagenUrl: '', titulo: '', descripcion: '', link: '', textoBoton: 'Ver Más', activo: true });
+                                        }}
+                                        style={{ padding: '0.75rem 1.25rem', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-md)', cursor: 'pointer', background: '#f8fafc', color: '#64748b', fontWeight: 600 }}
+                                    >
+                                        Cancelar
+                                    </button>
+                                )}
+                            </div>
+                            {editingBannerId && (
+                                <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#f59e0b', fontWeight: 600 }}>
+                                    ✏️ Modo edición activo — estás modificando el banner seleccionado.
+                                </p>
+                            )}
                         </div>
-                        
-                        {/* SECCIÓN 2: Lista de Banners */}
+
+                        {/* SECCIÓN 2: Lista de Banners con Drag & Drop */}
                         <div className={styles.campaignCard}>
                             <div className={styles.campaignCardHeader}>
                                 <h2>📊 Banners Actuales</h2>
+                                <small style={{ color: '#64748b', fontWeight: 'normal' }}>
+                                    <GripVertical size={14} style={{ verticalAlign: 'middle' }} /> Arrastrá para reordenar
+                                </small>
                             </div>
-                            
+
                             {loadingBanners ? <p>Cargando banners...</p> : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
                                     {adminBanners.length === 0 && <p>No hay banners creados.</p>}
-                                    {adminBanners.map(b => (
-                                        <div key={b.id} style={{ display: 'flex', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px', gap: '15px', alignItems: 'center' }}>
-                                            <img src={b.imagenUrl} alt="Banner" style={{ width: '120px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontWeight: 'bold' }}>{b.titulo || 'Sin título'}</div>
-                                                <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Link: {b.link || 'Ninguno'}</div>
+                                    {adminBanners.map((b, index) => (
+                                        <div
+                                            key={b.id}
+                                            draggable
+                                            onDragStart={() => setDragIndex(index)}
+                                            onDragOver={e => { e.preventDefault(); setDragOverIndex(index); }}
+                                            onDrop={() => {
+                                                if (dragIndex === null || dragIndex === index) return;
+                                                const reordered = [...adminBanners];
+                                                const [moved] = reordered.splice(dragIndex, 1);
+                                                reordered.splice(index, 0, moved);
+                                                setDragIndex(null);
+                                                setDragOverIndex(null);
+                                                handleReorderBanners(reordered);
+                                            }}
+                                            onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                                            style={{
+                                                display: 'flex',
+                                                border: dragOverIndex === index
+                                                    ? '2px dashed #ff5722'
+                                                    : editingBannerId === b.id
+                                                    ? '2px solid #f59e0b'
+                                                    : '1px solid #e2e8f0',
+                                                borderRadius: '8px',
+                                                padding: '10px',
+                                                gap: '12px',
+                                                alignItems: 'center',
+                                                background: dragIndex === index ? '#f1f5f9' : editingBannerId === b.id ? '#fffbeb' : 'white',
+                                                opacity: dragIndex === index ? 0.5 : 1,
+                                                cursor: 'grab',
+                                                transition: 'all 0.15s',
+                                                userSelect: 'none',
+                                            }}
+                                        >
+                                            {/* Handle de arrastre */}
+                                            <div title="Arrastrá para reordenar" style={{ color: '#94a3b8', cursor: 'grab', flexShrink: 0, display: 'flex' }}>
+                                                <GripVertical size={20} />
                                             </div>
-                                            <div style={{ display: 'flex', gap: '10px' }}>
-                                                <button 
+
+                                            <img
+                                                src={b.imagenUrl}
+                                                alt="Banner"
+                                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                style={{ width: '90px', height: '52px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }}
+                                            />
+
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontWeight: 700, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    {b.titulo || 'Sin título'}
+                                                </div>
+                                                <div style={{ fontSize: '0.78rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    🔗 {b.link || 'Sin link'}
+                                                </div>
+                                            </div>
+
+                                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+                                                {/* Botón Editar */}
+                                                <button
+                                                    title="Editar este banner"
+                                                    onClick={() => handleEditBanner(b)}
+                                                    style={{
+                                                        background: editingBannerId === b.id ? '#fef3c7' : '#f8fafc',
+                                                        border: editingBannerId === b.id ? '1px solid #f59e0b' : '1px solid #e2e8f0',
+                                                        borderRadius: '6px', padding: '6px 10px',
+                                                        cursor: 'pointer', color: '#475569',
+                                                        display: 'flex', alignItems: 'center'
+                                                    }}
+                                                >
+                                                    <Edit3 size={15} />
+                                                </button>
+
+                                                {/* Botón Activo/Oculto */}
+                                                <button
                                                     onClick={() => handleToggleBanner(b.id, b.activo)}
                                                     className={b.activo ? styles.btnHabilitado : styles.btnDeshabilitado}
                                                 >
                                                     {b.activo ? 'Activo' : 'Oculto'}
                                                 </button>
-                                                <button 
+
+                                                {/* Botón Eliminar */}
+                                                <button
                                                     onClick={() => handleDeleteBanner(b.id)}
-                                                    style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px', cursor: 'pointer' }}
+                                                    style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                                                 >
-                                                    <Trash2 size={16} />
+                                                    <Trash2 size={15} />
                                                 </button>
                                             </div>
                                         </div>

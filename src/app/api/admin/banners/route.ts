@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllBanners, createBanner, updateBanner, deleteBanner } from '@/lib/googleSheets';
+import { getAllBanners, createBanner, updateBanner, deleteBanner, reorderBanners } from '@/lib/googleSheets';
 
 export async function GET(request: Request) {
   try {
@@ -38,10 +38,21 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { password, id, updates } = body;
+    const { password, id, updates, idList } = body;
 
     if (password !== process.env.ADMIN_PASSWORD) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Modo reordenamiento: se envía un array de IDs en el nuevo orden
+    if (idList && Array.isArray(idList)) {
+      const success = await reorderBanners(idList);
+      return NextResponse.json({ success });
+    }
+
+    // Modo edición individual
+    if (!id) {
+      return NextResponse.json({ error: 'Falta el ID del banner' }, { status: 400 });
     }
 
     const success = await updateBanner(id, updates);

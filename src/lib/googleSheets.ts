@@ -695,4 +695,45 @@ export async function deleteBanner(id: string): Promise<boolean> {
   return true;
 }
 
+// Reordenar banners (guarda el nuevo orden en Google Sheets)
+export async function reorderBanners(idList: string[]): Promise<boolean> {
+  const sheet = await getBannersSheet();
+  const rows = await sheet.getRows();
+
+  // Crear mapa de datos por ID
+  const dataMap = new Map<string, Record<string, string>>();
+  rows.forEach(row => {
+    dataMap.set(row.get('ID'), {
+      imagenUrl: row.get('ImagenURL') || '',
+      titulo: row.get('Titulo') || '',
+      descripcion: row.get('Descripcion') || '',
+      link: row.get('Link') || '',
+      textoBoton: row.get('TextoBoton') || 'Ver Más',
+      activo: row.get('Activo') || 'Si',
+    });
+  });
+
+  // Sobreescribir cada fila en el nuevo orden
+  for (let i = 0; i < rows.length && i < idList.length; i++) {
+    const id = idList[i];
+    const data = dataMap.get(id);
+    if (data) {
+      rows[i].set('ID', id);
+      rows[i].set('ImagenURL', data.imagenUrl);
+      rows[i].set('Titulo', data.titulo);
+      rows[i].set('Descripcion', data.descripcion);
+      rows[i].set('Link', data.link);
+      rows[i].set('TextoBoton', data.textoBoton);
+      rows[i].set('Activo', data.activo);
+      await rows[i].save();
+    }
+  }
+
+  cachedDoc = null;
+  lastConnectionTime = 0;
+
+  return true;
+}
+
+
 
