@@ -97,6 +97,15 @@ export default function CuentaPage() {
 
         const userData = JSON.parse(storedUser);
         fetchUserData(userData.email);
+
+        // Verificar si se especificó una pestaña en la URL (?tab=rma o ?tab=pedidos)
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+            if (tabParam === 'rma' || tabParam === 'pedidos' || tabParam === 'perfil') {
+                setActiveTab(tabParam as any);
+            }
+        }
     }, [router]);
 
     const fetchUserData = async (email: string) => {
