@@ -1,0 +1,60 @@
+.trustSection {
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 2.5rem 1rem;
+    margin: 1rem 0 2rem 0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+
+.featureCard {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: white;
+    border: 1px solid #edf2f7;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.featureCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+}
+
+.iconWrapper {
+    background: #f1f5f9;
+    padding: 0.75rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.textWrapper h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.35rem;
+}
+
+.textWrapper p {
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+}

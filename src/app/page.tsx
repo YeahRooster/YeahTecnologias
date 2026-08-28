@@ -1,5 +1,7 @@
 import HeroCarousel from "@/components/HeroCarousel";
+import TrustFeatures from "@/components/TrustFeatures";
 import NewArrivals from "@/components/NewArrivals";
+import FeaturedOffers from "@/components/FeaturedOffers";
 import Link from "next/link";
 import styles from "./page.module.css";
 
@@ -9,11 +11,17 @@ export default function Home() {
       {/* Slider Dinámico de Banners */}
       <HeroCarousel />
 
+      {/* Franja de 3 Beneficios Mayoristas */}
+      <TrustFeatures />
+
+      {/* Ofertas y Oportunidades (si hay con descuento) */}
+      <FeaturedOffers />
+
       {/* Últimos Ingresos (Novedades) */}
       <NewArrivals />
 
       {/* Categorías Destacadas */}
-      <section className="container" style={{ padding: '4rem 1rem' }}>
+      <section className="container" style={{ padding: '3rem 1rem' }}>
         <h2 className="section-title">Categorías Populares</h2>
         <div className={styles.categoriesGrid}>
           {['Hardware', 'Almacenamiento', 'Audio', 'Accesorios'].map((cat) => (

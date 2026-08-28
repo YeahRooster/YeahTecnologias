@@ -6,6 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import ProductModal from "@/components/ProductModal";
 import { Filter, Loader2, X, Lock, Download, Heart } from "lucide-react";
 import Link from "next/link";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 import styles from './catalogo.module.css';
 
 interface Product {
@@ -33,7 +34,7 @@ function CatalogContent() {
     const [selectedCategory, setSelectedCategory] = useState<string>(searchCategoria);
     const [minPrice, setMinPrice] = useState<number | ''>('');
     const [maxPrice, setMaxPrice] = useState<number | ''>('');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'default'>('default');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'novedades' | 'default'>('default');
     const [hideOutOfStock, setHideOutOfStock] = useState(false);
 
     // Estado para el Modal
@@ -128,6 +129,12 @@ function CatalogContent() {
 
     if (sortOrder === 'asc') filteredProducts.sort((a, b) => a.price - b.price);
     if (sortOrder === 'desc') filteredProducts.sort((a, b) => b.price - a.price);
+    if (sortOrder === 'novedades') {
+        // Muestra únicamente los últimos 30 productos cargados (los más nuevos primero)
+        filteredProducts = filteredProducts.slice(0, 30);
+    }
+
+    const { isWhiteLabel, brandName } = useWhiteLabel();
 
     if (loading) return (
         <div className="container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
@@ -137,16 +144,24 @@ function CatalogContent() {
         </div>
     );
 
+    const catalogTitle = searchQuery
+        ? `Búsqueda: "${searchQuery}"`
+        : searchTag
+        ? `Etiqueta: "${searchTag}"`
+        : isWhiteLabel
+        ? (brandName && brandName !== 'Catálogo Digital' ? `Catálogo - ${brandName}` : 'Catálogo de Productos')
+        : 'Catálogo Mayorista';
+
     return (
         <div className="container" style={{ padding: '2rem 1rem' }}>
 
             {/* Header */}
             <div className={styles.catalogHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <h1 className="section-title" style={{ textAlign: 'left', marginBottom: 0 }}>
-                    {searchQuery ? `Búsqueda: "${searchQuery}"` : searchTag ? `Etiqueta: "${searchTag}"` : 'Catálogo Mayorista'}
+                    {catalogTitle}
                 </h1>
 
-                {isAuthorized && (
+                {isAuthorized && !isWhiteLabel && (
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <Link href="/favoritos" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}>
                             <Heart size={18} fill="var(--accent)" color="var(--accent)" /> Mis Favoritos
@@ -216,6 +231,7 @@ function CatalogContent() {
                         className={styles.filterSelect}
                     >
                         <option value="default">Relevancia</option>
+                        <option value="novedades">Novedades (Últimos ingresos)</option>
                         <option value="asc">Menor Precio</option>
                         <option value="desc">Mayor Precio</option>
                     </select>

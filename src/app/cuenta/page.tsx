@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Package, Edit3, LogOut, Save, X, Printer, RotateCcw, Heart, Download, ShieldAlert, Send, RefreshCw } from 'lucide-react';
+import { User, Package, Edit3, LogOut, Save, X, Printer, RotateCcw, Heart, Download, ShieldAlert, Send, RefreshCw, Briefcase, Share2, Eye, EyeOff, Check, Image as ImageIcon, Settings } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useWhiteLabel } from '@/context/WhiteLabelContext';
 import styles from './cuenta.module.css';
 
 interface UserData {
@@ -31,7 +32,7 @@ interface Order {
 
 export default function CuentaPage() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'perfil' | 'pedidos' | 'rma'>('perfil');
+    const [activeTab, setActiveTab] = useState<'perfil' | 'pedidos' | 'rma' | 'whitelabel'>('perfil');
 
     // Estado para RMA
     interface RmaItem {
@@ -304,6 +305,24 @@ export default function CuentaPage() {
         }
     };
 
+    const {
+        isWhiteLabel,
+        profitMargin,
+        brandName,
+        brandLogo,
+        whatsappNumber,
+        isBarHidden,
+        toggleWhiteLabel,
+        setProfitMargin,
+        setBrandName,
+        setBrandLogo,
+        setWhatsappNumber,
+        toggleBarHidden,
+        getShareableLink
+    } = useWhiteLabel();
+
+    const [cuentaCopiedLink, setCuentaCopiedLink] = useState(false);
+
     if (loading) {
         return (
             <div className={styles.loading}>
@@ -344,6 +363,14 @@ export default function CuentaPage() {
                 >
                     <ShieldAlert size={18} /> RMA / Garantías
                 </button>
+                {user.habilitado && (
+                    <button
+                        className={`${styles.tab} ${activeTab === 'whitelabel' ? styles.active : ''}`}
+                        onClick={() => setActiveTab('whitelabel')}
+                    >
+                        <Briefcase size={18} /> Mi Local / Revendedor
+                    </button>
+                )}
             </div>
 
             {message && <div className={styles.successMessage}>{message}</div>}
@@ -734,6 +761,229 @@ export default function CuentaPage() {
                     </div>
                 </div>
             )}
+
+            {/* PESTAÑA: MI LOCAL / MODO REVENDEDOR (MARCA BLANCA) */}
+            {activeTab === 'whitelabel' && (
+                <div style={{ background: 'white', padding: '2rem', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '1rem' }}>
+                        <div>
+                            <h2 style={{ fontSize: '1.4rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Briefcase size={24} color="#0284c7" />
+                                Configuración de Mi Local / Modo Revendedor
+                            </h2>
+                            <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+                                Personalizá el catálogo con los datos de tu negocio y tu margen de ganancia para mostrárselo a tus clientes o compartirles el link directo.
+                            </p>
+                        </div>
+
+                        {/* Switch Activar/Desactivar Modo Mostrador */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#f8fafc', padding: '0.6rem 1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                            <span style={{ fontWeight: 700, fontSize: '0.85rem', color: isWhiteLabel ? '#16a34a' : '#64748b' }}>
+                                {isWhiteLabel ? '✅ Modo Mostrador Activado' : '⚪ Modo Mayorista Normal'}
+                            </span>
+                            <button
+                                onClick={toggleWhiteLabel}
+                                style={{
+                                    padding: '0.4rem 0.8rem',
+                                    borderRadius: '6px',
+                                    fontWeight: 700,
+                                    fontSize: '0.8rem',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    background: isWhiteLabel ? '#ef4444' : '#0284c7',
+                                    color: 'white'
+                                }}
+                            >
+                                {isWhiteLabel ? 'Desactivar' : 'Activar Modo Mostrador'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
+                        {/* Tarjeta 1: Margen y Visibilidad de Barra */}
+                        <div style={{ padding: '1.5rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                            <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#1e293b' }}>💰 Margen de Ganancia</h3>
+                            
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '0.5rem' }}>
+                                Porcentaje de Recargo sobre el Costo Mayorista:
+                            </label>
+                            
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                                {[30, 40, 50, 70].map(m => (
+                                    <button
+                                        key={m}
+                                        onClick={() => setProfitMargin(m)}
+                                        style={{
+                                            padding: '0.4rem 0.8rem',
+                                            borderRadius: '6px',
+                                            fontWeight: 700,
+                                            fontSize: '0.85rem',
+                                            border: profitMargin === m ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                                            background: profitMargin === m ? '#0284c7' : 'white',
+                                            color: profitMargin === m ? 'white' : '#334155',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        +{m}%
+                                    </button>
+                                ))}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="500"
+                                        value={profitMargin}
+                                        onChange={e => setProfitMargin(Math.max(0, parseInt(e.target.value) || 0))}
+                                        style={{ width: '70px', padding: '0.4rem', borderRadius: '6px', border: '1px solid #cbd5e1', textAlign: 'center', fontWeight: 700 }}
+                                    />
+                                    <span style={{ fontWeight: 700 }}>%</span>
+                                </div>
+                            </div>
+
+                            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1rem', marginTop: '1rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: '#334155', fontWeight: 600 }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={!isBarHidden}
+                                        onChange={toggleBarHidden}
+                                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                    />
+                                    Mostrar barra superior de control de margen en la web
+                                </label>
+                                <small style={{ display: 'block', color: '#64748b', fontSize: '0.78rem', marginTop: '4px', marginLeft: '26px' }}>
+                                    Si desmarcás esto, la barra superior se ocultará en toda la web para que navegues frente a tu cliente sin que vea el margen.
+                                </small>
+                            </div>
+                        </div>
+
+                        {/* Tarjeta 2: Datos de Tu Local */}
+                        <div style={{ padding: '1.5rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                            <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#1e293b' }}>🏬 Datos de Tu Local</h3>
+                            
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '0.3rem' }}>
+                                    Nombre de Tu Negocio:
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: TechStore Rosario"
+                                    value={brandName}
+                                    onChange={e => setBrandName(e.target.value)}
+                                    style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                                />
+                            </div>
+
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '0.3rem' }}>
+                                    WhatsApp para recibir pedidos de tus clientes:
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: 5493421234567"
+                                    value={whatsappNumber}
+                                    onChange={e => setWhatsappNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                                    style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '0.3rem' }}>
+                                    Logo de Tu Negocio:
+                                </label>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        id="cuenta-logo-upload"
+                                        style={{ display: 'none' }}
+                                        onChange={e => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => setBrandLogo(reader.result as string);
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor="cuenta-logo-upload"
+                                        style={{
+                                            padding: '0.5rem 0.8rem',
+                                            background: '#0284c7',
+                                            color: 'white',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontSize: '0.85rem',
+                                            fontWeight: 600,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.3rem'
+                                        }}
+                                    >
+                                        <ImageIcon size={16} /> Subir Logo
+                                    </label>
+                                    {brandLogo && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setBrandLogo('')}
+                                            style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '6px', padding: '0.5rem 0.8rem', cursor: 'pointer', fontSize: '0.8rem' }}
+                                        >
+                                            Quitar Logo
+                                        </button>
+                                    )}
+                                </div>
+                                {brandLogo && (
+                                    <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#0f172a', borderRadius: '6px', textAlign: 'center' }}>
+                                        <img src={brandLogo} alt="Logo" style={{ maxHeight: '40px', maxWidth: '100%', objectFit: 'contain' }} />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Tarjeta 3: Compartir Catálogo con Clientes */}
+                    <div style={{ marginTop: '1.5rem', padding: '1.5rem', background: 'linear-gradient(135deg, #eff6ff, #f0fdf4)', borderRadius: '12px', border: '1px solid #bfdbfe' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                            <div>
+                                <h3 style={{ fontSize: '1.1rem', color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <Share2 size={20} color="#2563eb" />
+                                    Link de Tu Catálogo para Clientes
+                                </h3>
+                                <p style={{ color: '#475569', fontSize: '0.85rem', marginTop: '0.2rem' }}>
+                                    Enviá este enlace por WhatsApp a tus clientes. Ellos verán tus precios con el +{profitMargin}% de ganancia, tu logo y podrán pedirte directamente por WhatsApp.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const link = getShareableLink();
+                                    navigator.clipboard.writeText(link).then(() => {
+                                        setCuentaCopiedLink(true);
+                                        setTimeout(() => setCuentaCopiedLink(false), 2500);
+                                    });
+                                }}
+                                style={{
+                                    padding: '0.75rem 1.25rem',
+                                    background: '#16a34a',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    fontWeight: 700,
+                                    fontSize: '0.9rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem',
+                                    boxShadow: '0 4px 10px rgba(22, 163, 74, 0.25)'
+                                }}
+                            >
+                                {cuentaCopiedLink ? <Check size={18} /> : <Share2 size={18} />}
+                                {cuentaCopiedLink ? '¡Link Copiado al Portapapeles!' : 'Copiar Link para Clientes'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* MODAL DETALLE PEDIDO PARA CLIENTE */}
             {selectedOrder && (
                 <div className={styles.modalOverlay} onClick={() => setSelectedOrder(null)}>

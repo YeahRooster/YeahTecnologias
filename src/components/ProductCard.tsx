@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ShoppingCart, Plus, Minus, Check, Bell, Heart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 import styles from "./ProductCard.module.css";
 
 interface Product {
@@ -24,6 +25,7 @@ interface ProductCardProps {
 export default function ProductCard({ product, isAuthorized = false }: ProductCardProps) {
     const { addToCart } = useCart();
     const { toggleFavorite, isFavorite } = useFavorites();
+    const { isWhiteLabel, calculateRetailPrice } = useWhiteLabel();
     const [quantity, setQuantity] = useState(1);
     const [added, setAdded] = useState(false);
 
@@ -127,9 +129,9 @@ export default function ProductCard({ product, isAuthorized = false }: ProductCa
 
 
                 <div className={styles.priceRow}>
-                    {isAuthorized ? (
+                    {isAuthorized || isWhiteLabel ? (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                            {(product.originalPrice ?? 0) > 0 && (product.originalPrice ?? 0) > product.price && (
+                            {!isWhiteLabel && (product.originalPrice ?? 0) > 0 && (product.originalPrice ?? 0) > product.price && (
                                 <span style={{
                                     textDecoration: 'line-through',
                                     color: '#94a3b8',
@@ -140,8 +142,10 @@ export default function ProductCard({ product, isAuthorized = false }: ProductCa
                                 </span>
                             )}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span className={styles.price}>${product.price.toLocaleString('es-AR')}</span>
-                                {(product.originalPrice ?? 0) > 0 && (product.originalPrice ?? 0) > product.price && (
+                                <span className={styles.price}>
+                                    ${(isWhiteLabel ? calculateRetailPrice(product.price) : product.price).toLocaleString('es-AR')}
+                                </span>
+                                {!isWhiteLabel && (product.originalPrice ?? 0) > 0 && (product.originalPrice ?? 0) > product.price && (
                                     <span style={{
                                         backgroundColor: '#ef4444',
                                         color: 'white',
@@ -151,6 +155,11 @@ export default function ProductCard({ product, isAuthorized = false }: ProductCa
                                         fontWeight: 'bold'
                                     }}>
                                         -{Math.round((((product.originalPrice ?? 0) - product.price) / (product.originalPrice || 1)) * 100)}%
+                                    </span>
+                                )}
+                                {isWhiteLabel && (
+                                    <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 600 }}>
+                                        Precio Venta Público
                                     </span>
                                 )}
                             </div>
@@ -163,7 +172,7 @@ export default function ProductCard({ product, isAuthorized = false }: ProductCa
                     )}
                 </div>
 
-                {isAuthorized && !outOfStock && (
+                {!isWhiteLabel && isAuthorized && !outOfStock && (
                     <div className={styles.actions}>
                         <div className={styles.quantitySelector}>
                             <button
