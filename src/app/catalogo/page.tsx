@@ -173,8 +173,8 @@ function CatalogContent() {
                 )}
             </div>
 
-            {/* BANNER DE ACCESO */}
-            {!isAuthorized && (
+            {/* BANNER DE ACCESO MAYORISTA (Solo visible para visitantes anónimos fuera del modo marca blanca) */}
+            {!isAuthorized && !isWhiteLabel && (
                 <div className={`${styles.authBanner} ${userStatus === 'pending' ? styles.authBannerPending : styles.authBannerGuest}`}>
                     {userStatus === 'pending' ? (
                         <>

@@ -2,11 +2,13 @@
 
 import { AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
+import { useWhiteLabel } from '@/context/WhiteLabelContext';
 
 export default function PriceWarning() {
+    const { isWhiteLabel } = useWhiteLabel();
     const [isVisible, setIsVisible] = useState(true);
 
-    if (!isVisible) return null;
+    if (!isVisible || isWhiteLabel) return null;
 
     return (
         <div style={{

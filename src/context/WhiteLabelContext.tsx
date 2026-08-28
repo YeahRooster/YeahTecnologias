@@ -76,6 +76,14 @@ export function WhiteLabelProvider({ children }: { children: React.ReactNode }) 
         if (savedBarHidden === 'true') setIsBarHidden(true);
     }, []);
 
+    // Actualizar dinámicamente el título de la pestaña del navegador para ocultar 'Yeah! Tecnologías'
+    useEffect(() => {
+        if (isWhiteLabel && typeof document !== 'undefined') {
+            const titleName = brandName && brandName !== 'Catálogo Digital' ? brandName : 'Catálogo Digital';
+            document.title = `${titleName} | Catálogo de Productos`;
+        }
+    }, [isWhiteLabel, brandName]);
+
     const toggleWhiteLabel = () => {
         setIsWhiteLabel(prev => {
             const next = !prev;
