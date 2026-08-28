@@ -13,6 +13,73 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
     {
+        id: '6',
+        slug: 'guia-modo-mostrador-revendedores',
+        title: 'Guía paso a paso: Cómo usar el Modo Mostrador para vender con tu propia marca',
+        excerpt: 'Descubrí cómo convertir nuestro catálogo en tu propia tienda online personalizada: configurá tu margen de ganancia, cargá tu logo y recibí pedidos directos a tu WhatsApp.',
+        date: '28 Ago, 2026',
+        category: 'Revendedores',
+        tags: ['Revendedores', 'Modo Mostrador', 'Marca Blanca', 'Ventas', 'Tutorial'],
+        imageUrl: '/blog/cables-carga-lenta.png',
+        content: `
+            <p>¿Tenés un local de tecnología, vendés por redes sociales o te gustaría ofrecer productos a tus clientes sin invertir en crear una página web desde cero? El <strong>Modo Mostrador (Marca Blanca)</strong> de Yeah! Tecnologías está pensado especialmente para vos.</p>
+
+            <p>Con esta herramienta podés usar todo nuestro catálogo frente a tus clientes o enviarles un link por WhatsApp con <strong>tus propios precios de venta, tu logo y tus datos de contacto</strong>, sin que nadie vea tus costos mayoristas.</p>
+
+            <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #e2e8f0;" />
+
+            <h3>💼 ¿Qué ventajas te da el Modo Mostrador?</h3>
+            <ul>
+                <li><strong>Precios automáticos con tu ganancia:</strong> Elegís tu margen de recargo (+30%, +40%, +50%, +70% o personalizado) y todos los precios se recalculan en tiempo real.</li>
+                <li><strong>Tu marca en primer plano:</strong> Podés cargar el nombre de tu local y subir tu propio logo para que reemplace cualquier información institucional.</li>
+                <li><strong>Pedidos directos a tu WhatsApp:</strong> Tus clientes finales verán un botón verde <em>“📲 Pedir por WhatsApp a [Tu Local]”</em> para encargarte el producto directamente a tu teléfono.</li>
+                <li><strong>Descarga de fotos limpias y textos para redes:</strong> Cada producto cuenta con un botón para descargar la foto en alta resolución sin marcas y copiar el texto listo para tus historias o estados.</li>
+            </ul>
+
+            <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #e2e8f0;" />
+
+            <h3>🚀 Paso a Paso: Cómo configurarlo en 2 minutos</h3>
+
+            <h4>Paso 1: Iniciá sesión con tu cuenta mayorista</h4>
+            <p>Ingresá con tu correo y contraseña en <a href="/login">Iniciar Sesión</a>. Si todavía no tenés cuenta de cliente habilitado, podés registrarte en la web y solicitar tu habilitación mayorista.</p>
+
+            <h4>Paso 2: Activá el Modo Mostrador</h4>
+            <p>Hacé clic en el botón <strong>💼 Modo Mostrador</strong> en la barra superior o ingresá a <a href="/cuenta">Mi Cuenta</a> y seleccioná la pestaña <strong>“Mi Local / Revendedor”</strong>.</p>
+
+            <h4>Paso 3: Establecé tu porcentaje de ganancia</h4>
+            <p>Elegí qué porcentaje querés sumarle al precio mayorista. Por ejemplo, si un producto cuesta $10.000 y elegís <strong>+40%</strong>, en la web se mostrará a <strong>$14.000</strong>.</p>
+
+            <h4>Paso 4: Personalizá los datos de tu negocio</h4>
+            <ul>
+                <li><strong>Nombre del local:</strong> Escribí el nombre de tu negocio o tienda.</li>
+                <li><strong>Logo:</strong> Subí una imagen con el logo de tu local desde tu computadora o celular.</li>
+                <li><strong>Número de WhatsApp:</strong> Ingresá tu número con código de país (ej: <code>5493421234567</code>) para recibir los pedidos y consultas de tus clientes.</li>
+            </ul>
+
+            <h4>Paso 5: Compartí el enlace con tus clientes</h4>
+            <p>Hacé clic en <strong>“📲 Copiar Link para Clientes”</strong>. Se generará automáticamente un enlace neutro que podés pegar en WhatsApp, Instagram o estados. Cuando tus clientes abran ese enlace:</p>
+            <ol>
+                <li>Verán el catálogo completo con tu logo y tus precios finales ya aumentados.</li>
+                <li>No verán ninguna mención a precios mayoristas ni a Yeah! Tecnologías.</li>
+                <li>Al elegir un producto, tocarán el botón para pedirte directamente a tu WhatsApp.</li>
+            </ol>
+
+            <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #e2e8f0;" />
+
+            <h3>💡 Consejos para vender más con tu catálogo digital</h3>
+            <ul>
+                <li><strong>Fijalo en tu biografía de Instagram:</strong> Pegá tu link de catálogo en el perfil de tus redes sociales para que tus seguidores consulten precios actualizados.</li>
+                <li><strong>Aprovechá las fotos y copies:</strong> Usá el botón <em>“Copiar Texto para Redes”</em> en los productos más vendidos y publicalos en tus estados de WhatsApp junto con la foto descargada.</li>
+                <li><strong>Atendé en tu mostrador con total tranquilidad:</strong> Si tenés un cliente físico en tu tienda, podés usar la web en una tablet o computadora para mostrarle modelos y stock en tiempo real.</li>
+            </ul>
+
+            <p style="background: #f0fdf4; padding: 1.25rem; border-radius: 8px; border-left: 4px solid #16a34a; margin-top: 2rem;">
+                <strong>¿Tenés dudas o necesitás ayuda para configurarlo?</strong><br />
+                Escribinos por WhatsApp a nuestro canal mayorista y nuestro equipo te asiste en lo que necesites para poner a punto tu catálogo de ventas.
+            </p>
+        `
+    },
+    {
         id: '5',
         slug: 'cables-carga-lenta-reclamos',
         title: 'Por qué algunos cables cargan lento (aunque sean nuevos) y cómo evitar reclamos',
