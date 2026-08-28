@@ -272,28 +272,28 @@ function CatalogContent() {
                     )}
                 </div>
 
-                {/* SIDEBAR PUBLICIDAD */}
-                <aside className={styles.sidebar}>
+                {/* SIDEBAR PUBLICIDAD (Oculto en Modo Marca Blanca) */}
+                {!isWhiteLabel && (
+                    <aside className={styles.sidebar}>
+                        {/* Banner ROOSTER (Vertical) */}
+                        <a href="https://www.instagram.com/roosterespacio" target="_blank" rel="noopener noreferrer" className={styles.adBanner}>
+                            <img
+                                src="/ads/rooster_banner.png"
+                                alt="Escuela de Dibujo Rooster"
+                                className={styles.adImg}
+                            />
+                        </a>
 
-                    {/* Banner ROOSTER (Vertical) */}
-                    <a href="https://www.instagram.com/roosterespacio" target="_blank" rel="noopener noreferrer" className={styles.adBanner}>
-                        <img
-                            src="/ads/rooster_banner.png"
-                            alt="Escuela de Dibujo Rooster"
-                            className={styles.adImg}
-                        />
-                    </a>
-
-                    {/* Banner REXY (Cuadrado) */}
-                    <a href="https://instagram.com/rexy.libreria" target="_blank" rel="noopener noreferrer" className={styles.adBanner}>
-                        <img
-                            src="/ads/rexy_banner.png"
-                            alt="Librería Rexy"
-                            className={styles.adImg}
-                        />
-                    </a>
-
-                </aside>
+                        {/* Banner REXY (Cuadrado) */}
+                        <a href="https://instagram.com/rexy.libreria" target="_blank" rel="noopener noreferrer" className={styles.adBanner}>
+                            <img
+                                src="/ads/rexy_banner.png"
+                                alt="Librería Rexy"
+                                className={styles.adImg}
+                            />
+                        </a>
+                    </aside>
+                )}
 
             </div>
 
