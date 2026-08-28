@@ -341,15 +341,15 @@ export default function Header() {
                     </div>
 
                     <nav className="nav-actions">
-                        {/* Botón rápido Modo Mostrador / Marca Blanca para clientes mayoristas habilitados */}
-                        {isAuthorized && (
+                        {/* Botón rápido Modo Mostrador: visible ÚNICAMENTE para el comerciante mayorista logueado (NUNCA para el consumidor final) */}
+                        {isAuthorized && !isClientSharedView && !isWhiteLabel && (
                             <button
                                 className={`nav-item whitelabel-toggle-btn`}
                                 onClick={toggleWhiteLabel}
-                                title={isWhiteLabel ? "Desactivar modo mostrador" : "Activar modo mostrador (marca blanca con tu margen)"}
+                                title="Activar modo mostrador (marca blanca con tu margen)"
                             >
                                 <Briefcase size={18} />
-                                <span>{isWhiteLabel ? 'Ver Mayorista' : 'Modo Mostrador'}</span>
+                                <span>Modo Mostrador</span>
                             </button>
                         )}
 

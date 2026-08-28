@@ -120,7 +120,10 @@ export function WhiteLabelProvider({ children }: { children: React.ReactNode }) 
 
     const getShareableLink = () => {
         if (typeof window === 'undefined') return '';
-        const origin = window.location.origin;
+        // Si está en producción, usamos el dominio neutro asignado en Vercel
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const baseUrl = isLocalhost ? window.location.origin : 'https://mitienda-digital.vercel.app';
+
         const params = new URLSearchParams();
         params.set('modo', 'catalogo');
         params.set('m', profitMargin.toString());
@@ -128,7 +131,7 @@ export function WhiteLabelProvider({ children }: { children: React.ReactNode }) 
         if (whatsappNumber) params.set('tel', whatsappNumber);
         if (brandLogo && brandLogo.startsWith('http')) params.set('logo', brandLogo);
 
-        return `${origin}/catalogo?${params.toString()}`;
+        return `${baseUrl}/catalogo?${params.toString()}`;
     };
 
     return (
