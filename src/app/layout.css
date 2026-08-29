@@ -22,10 +22,20 @@
     gap: var(--spacing-lg);
 }
 
+.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
 .logo-img {
     height: 45px;
     width: auto;
+    max-height: 48px;
+    max-width: 220px;
     object-fit: contain;
+    display: block;
 }
 
 .mobile-menu-btn {

@@ -269,17 +269,22 @@ export default function Header() {
             )}
 
             <div className="main-header container">
-                <Link href="/" className="logo">
+                <Link href="/" className="logo" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0, minHeight: '45px' }}>
                     {isWhiteLabel ? (
                         brandLogo ? (
-                            <img src={brandLogo} alt={brandName} className="reseller-custom-logo" />
+                            <img src={brandLogo} alt={brandName || 'Local'} className="reseller-custom-logo" style={{ maxHeight: '45px', maxWidth: '180px', objectFit: 'contain' }} />
                         ) : (
-                            <div className="neutral-brand-logo">
-                                🛍️ {brandName || 'Catálogo Digital'}
+                            <div className="neutral-brand-logo" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                🛍️ {brandName && brandName !== 'Catálogo Digital' ? brandName : 'Catálogo Digital'}
                             </div>
                         )
                     ) : (
-                        <img src="/logo.jpg" alt="Yeah! Tecnologías" className="logo-img" />
+                        <img
+                            src="/logo.jpg"
+                            alt="Yeah! Tecnologías"
+                            className="logo-img"
+                            style={{ height: '45px', width: 'auto', maxHeight: '48px', maxWidth: '200px', objectFit: 'contain', display: 'block' }}
+                        />
                     )}
                 </Link>
 
