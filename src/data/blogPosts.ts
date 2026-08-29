@@ -20,7 +20,7 @@ export const blogPosts: BlogPost[] = [
         date: '28 Ago, 2026',
         category: 'Revendedores',
         tags: ['Revendedores', 'Modo Mostrador', 'Marca Blanca', 'Ventas', 'Tutorial'],
-        imageUrl: '/blog/cables-carga-lenta.png',
+        imageUrl: '/blog/modo-mostrador-guia.jpg',
         content: `
             <p>¿Tenés un local de tecnología, vendés por redes sociales o te gustaría ofrecer productos a tus clientes sin invertir en crear una página web desde cero? El <strong>Modo Mostrador (Marca Blanca)</strong> de Yeah! Tecnologías está pensado especialmente para vos.</p>
 
