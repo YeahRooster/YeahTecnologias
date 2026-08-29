@@ -752,6 +752,81 @@ export interface BlogPostItem {
   activo: boolean;
 }
 
+export const defaultBlogPosts: BlogPostItem[] = [
+  {
+    id: '6',
+    slug: 'guia-modo-mostrador-revendedores',
+    title: 'Guía paso a paso: Cómo usar el Modo Mostrador para vender con tu propia marca',
+    excerpt: 'Descubrí cómo convertir nuestro catálogo en tu propia tienda online personalizada: configurá tu margen de ganancia, cargá tu logo y recibí pedidos directos a tu WhatsApp.',
+    content: `<p>¿Tenés un local de tecnología, vendés por redes sociales o te gustaría ofrecer productos a tus clientes sin invertir en crear una página web desde cero? El <strong>Modo Mostrador (Marca Blanca)</strong> de Yeah! Tecnologías está pensado especialmente para vos.</p><p>Con esta herramienta podés usar todo nuestro catálogo frente a tus clientes o enviarles un link por WhatsApp con <strong>tus propios precios de venta, tu logo y tus datos de contacto</strong>, sin que nadie vea tus costos mayoristas.</p><h3>💼 ¿Qué ventajas te da el Modo Mostrador?</h3><ul><li><strong>Precios automáticos con tu ganancia:</strong> Elegís tu margen de recargo (+30%, +40%, +50%, +70% o personalizado) y todos los precios se recalculan en tiempo real.</li><li><strong>Tu marca en primer plano:</strong> Podés cargar el nombre de tu local y subir tu propio logo para que reemplace cualquier información institucional.</li><li><strong>Pedidos directos a tu WhatsApp:</strong> Tus clientes finales verán un botón verde <em>“📲 Pedir por WhatsApp a [Tu Local]”</em> para encargarte el producto directamente a tu teléfono.</li><li><strong>Descarga de fotos limpias y textos para redes:</strong> Cada producto cuenta con un botón para descargar la foto en alta resolución sin marcas y copiar el texto listo para tus historias o estados.</li></ul>`,
+    date: '28 Ago, 2026',
+    category: 'Revendedores',
+    tags: ['Revendedores', 'Modo Mostrador', 'Marca Blanca', 'Ventas', 'Tutorial'],
+    imageUrl: '/blog/modo-mostrador-guia.jpg',
+    activo: true
+  },
+  {
+    id: '5',
+    slug: 'cables-carga-lenta-reclamos',
+    title: 'Por qué algunos cables cargan lento (aunque sean nuevos) y cómo evitar reclamos',
+    excerpt: 'No todos los cables son iguales. Aprende a identificar un cable de calidad y evita el reclamo más común en accesorios de celulares.',
+    content: `<p>Uno de los reclamos más comunes en accesorios para celulares es: <strong>“El cable es nuevo, pero carga lento”.</strong></p><p>La realidad es que no todos los cables son iguales, y muchos problemas se pueden evitar si se entiende qué mirar antes de vender o comprar.</p><h3>🔌 No todos los cables cargan igual</h3><ul><li><strong>Grosor interno del cable:</strong> Los cables más finos pierden energía. Cuanto más largo y más fino, peor rinde la carga.</li><li><strong>Material interno:</strong> Un buen cable usa cobre de mejor calidad.</li><li><strong>Carga vs carga + datos:</strong> Un cable de mala calidad puede fallar en ambas cosas.</li></ul>`,
+    date: '12 Ene, 2026',
+    category: 'Accesorios',
+    tags: ['Cables', 'Carga', 'Consejos', 'Ventas'],
+    imageUrl: '/blog/cables-carga-lenta.png',
+    activo: true
+  },
+  {
+    id: '4',
+    slug: 'cargadores-rapidos-bateria',
+    title: 'Cargadores rápidos y batería del celular: lo que de verdad importa',
+    excerpt: 'No todo es marketing. Aprende a identificar un buen cargador, qué es el amperaje y cómo cuidar la vida útil de tu batería sin mitos.',
+    content: `<p>Hoy casi todos los celulares prometen “carga rápida”, “turbo” o “fast charge”. El problema es que no siempre está claro qué es real, qué es marketing y qué conviene usar para no arruinar la batería con el tiempo.</p><h3>🔌 Voltaje y Amperaje</h3><p>El amperaje estable importa mucho más que una caja llena de Watts y promesas de marketing.</p>`,
+    date: '03 Ene, 2026',
+    category: 'Tecnología',
+    tags: ['Cargadores', 'Batería', 'Guía', 'Mitos'],
+    imageUrl: '/blog/charger-battery.png',
+    activo: true
+  },
+  {
+    id: '1',
+    slug: 'guia-auriculares-gamer',
+    title: 'Guía definitiva: Cómo elegir tus auriculares gamer',
+    excerpt: 'No todos los auriculares son iguales. Descubre qué buscar en cuanto a sonido, comodidad y micrófono según tu presupuesto.',
+    content: `<p>Elegir los auriculares perfectos puede marcar la diferencia entre escuchar los pasos de tu enemigo a tiempo o perder la partida. En Yeah! Tecnologías probamos cientos de modelos y aquí te traemos las claves.</p><h3>1. Comodidad: La reina olvidada</h3><p>Puedes tener el mejor sonido del mundo, pero si te duelen las orejas a los 30 minutos, no sirven. Busca almohadillas de <strong>memory foam</strong> y diademas ajustables con suspensión.</p><h3>2. ¿Sonido Surround 7.1 o Estéreo?</h3><p>Para juegos competitivos (Shooters), el estéreo de alta calidad suele ser mejor para posicionar enemigos.</p><h3>3. El Micrófono</h3><p>Si juegas con amigos, la comunicación es clave. Busca micrófonos con cancelación de ruido pasiva.</p>`,
+    date: '02 Ene, 2026',
+    category: 'Audio',
+    tags: ['Gamer', 'Auriculares', 'Guía', 'Audio'],
+    imageUrl: '/blog/headphones.png',
+    activo: true
+  },
+  {
+    id: '2',
+    slug: 'mantenimiento-pc-lenta',
+    title: '5 Errores que hacen que tu PC vaya lenta',
+    excerpt: '¿Tu computadora ya no vuela como antes? Antes de comprar una nueva, revisa estos puntos críticos de mantenimiento.',
+    content: `<p>Es la historia de siempre: compras una PC nueva, vuela, y al año parece una tortuga. No siempre es culpa del hardware, a veces es falta de cariño.</p><h3>1. El polvo es el enemigo silencioso</h3><p>El polvo obstruye los ventiladores. Menos aire = más calor. Más calor = el procesador baja su velocidad para no quemarse. Limpia tu PC cada 6 meses.</p><h3>2. Demasiados programas al inicio</h3><p>Abre el Administrador de Tareas y ve a la pestaña "Inicio". Deshabilita todo lo que no necesites.</p><h3>3. Discos llenos</h3><p>Los discos SSD pierden rendimiento si están llenos al tope. Intenta dejar siempre al menos un 15-20% de espacio libre.</p>`,
+    date: '28 Dic, 2025',
+    category: 'PC & Hardware',
+    tags: ['Mantenimiento', 'PC', 'Tips', 'Hardware'],
+    imageUrl: '/blog/pc-cleaning.png',
+    activo: true
+  },
+  {
+    id: '3',
+    slug: 'smartwatch-vs-smartband',
+    title: 'Smartwatch vs Smartband: ¿Cuál necesitas?',
+    excerpt: 'Analizamos las diferencias clave entre estos dos wearables para ayudarte a decidir cuál se adapta mejor a tu estilo de vida.',
+    content: `<p>Ambos te dan la hora y miden tus pasos, pero ahí terminan las similitudes. ¿Vale la pena pagar la diferencia por un Smartwatch?</p><h3>La Smartband: Ligera y Autónoma</h3><p>Si solo quieres medir tu sueño, pasos y ver notificaciones básicas sin cargar la batería cada día, la Smartband es para ti. Son económicas y la batería dura semanas.</p><h3>El Smartwatch: Tu teléfono en la muñeca</h3><p>Si quieres contestar llamadas, responder WhatsApps, usar mapas y tener apps completas, necesitas un Smartwatch.</p>`,
+    date: '26 Dic, 2025',
+    category: 'Wearables',
+    tags: ['Smartwatch', 'Comparativa', 'Gadgets'],
+    imageUrl: '/blog/smartwatch.png',
+    activo: true
+  }
+];
+
 // Obtener o crear la hoja 'Blog'
 export async function getBlogSheet() {
   const doc = await getDoc();
@@ -765,45 +840,21 @@ export async function getBlogSheet() {
       });
       console.log('✅ Hoja Blog creada automáticamente en Google Sheets');
 
-      // Auto-popular con los posts iniciales
-      await blogSheet.addRow({
-        'ID': '6',
-        'Slug': 'guia-modo-mostrador-revendedores',
-        'Titulo': 'Guía paso a paso: Cómo usar el Modo Mostrador para vender con tu propia marca',
-        'Extracto': 'Descubrí cómo convertir nuestro catálogo en tu propia tienda online personalizada: configurá tu margen de ganancia, cargá tu logo y recibí pedidos directos a tu WhatsApp.',
-        'Contenido': '<p>¿Tenés un local de tecnología, vendés por redes sociales o te gustaría ofrecer productos a tus clientes sin invertir en crear una página web desde cero? El <strong>Modo Mostrador (Marca Blanca)</strong> de Yeah! Tecnologías está pensado especialmente para vos.</p><p>Con esta herramienta podés usar todo nuestro catálogo frente a tus clientes o enviarles un link por WhatsApp con <strong>tus propios precios de venta, tu logo y tus datos de contacto</strong>, sin que nadie vea tus costos mayoristas.</p><h3>💼 ¿Qué ventajas te da el Modo Mostrador?</h3><ul><li><strong>Precios automáticos con tu ganancia:</strong> Elegís tu margen de recargo (+30%, +40%, +50%, +70% o personalizado) y todos los precios se recalculan en tiempo real.</li><li><strong>Tu marca en primer plano:</strong> Podés cargar el nombre de tu local y subir tu propio logo para que reemplace cualquier información institucional.</li><li><strong>Pedidos directos a tu WhatsApp:</strong> Tus clientes finales verán un botón verde <em>“📲 Pedir por WhatsApp a [Tu Local]”</em> para encargarte el producto directamente a tu teléfono.</li><li><strong>Descarga de fotos limpias y textos para redes:</strong> Cada producto cuenta con un botón para descargar la foto en alta resolución sin marcas y copiar el texto listo para tus historias o estados.</li></ul>',
-        'Fecha': '28 Ago, 2026',
-        'Categoria': 'Revendedores',
-        'Tags': 'Revendedores, Modo Mostrador, Marca Blanca, Ventas, Tutorial',
-        'ImagenURL': '/blog/modo-mostrador-guia.jpg',
-        'Activo': 'Si'
-      });
-
-      await blogSheet.addRow({
-        'ID': '5',
-        'Slug': 'cables-carga-lenta-reclamos',
-        'Titulo': 'Por qué algunos cables cargan lento (aunque sean nuevos) y cómo evitar reclamos',
-        'Extracto': 'No todos los cables son iguales. Aprende a identificar un cable de calidad y evita el reclamo más común en accesorios de celulares.',
-        'Contenido': '<p>Uno de los reclamos más comunes en accesorios para celulares es: <strong>“El cable es nuevo, pero carga lento”.</strong></p><p>La realidad es que no todos los cables son iguales, y muchos problemas se pueden evitar si se entiende qué mirar antes de vender o comprar.</p><h3>🔌 No todos los cables cargan igual</h3><ul><li><strong>Grosor interno del cable:</strong> Los cables más finos pierden energía. Cuanto más largo y más fino, peor rinde la carga.</li><li><strong>Material interno:</strong> Un buen cable usa cobre de mejor calidad.</li><li><strong>Carga vs carga + datos:</strong> Un cable de mala calidad puede fallar en ambas cosas.</li></ul>',
-        'Fecha': '12 Ene, 2026',
-        'Categoria': 'Accesorios',
-        'Tags': 'Cables, Carga, Consejos, Ventas',
-        'ImagenURL': '/blog/cables-carga-lenta.png',
-        'Activo': 'Si'
-      });
-
-      await blogSheet.addRow({
-        'ID': '4',
-        'Slug': 'cargadores-rapidos-bateria',
-        'Titulo': 'Cargadores rápidos y batería del celular: lo que de verdad importa',
-        'Extracto': 'No todo es marketing. Aprende a identificar un buen cargador, qué es el amperaje y cómo cuidar la vida útil de tu batería sin mitos.',
-        'Contenido': '<p>Hoy casi todos los celulares prometen “carga rápida”, “turbo” o “fast charge”. El problema es que no siempre está claro qué es real, qué es marketing y qué conviene usar para no arruinar la batería con el tiempo.</p><h3>🔌 Voltaje y Amperaje</h3><p>El amperaje estable importa mucho más que una caja llena de Watts y promesas de marketing.</p>',
-        'Fecha': '03 Ene, 2026',
-        'Categoria': 'Tecnología',
-        'Tags': 'Cargadores, Batería, Guía, Mitos',
-        'ImagenURL': '/blog/charger-battery.png',
-        'Activo': 'Si'
-      });
+      // Auto-popular con los 6 posts iniciales
+      for (const p of defaultBlogPosts) {
+        await blogSheet.addRow({
+          'ID': p.id,
+          'Slug': p.slug,
+          'Titulo': p.title,
+          'Extracto': p.excerpt,
+          'Contenido': p.content,
+          'Fecha': p.date,
+          'Categoria': p.category,
+          'Tags': Array.isArray(p.tags) ? p.tags.join(', ') : p.tags,
+          'ImagenURL': p.imageUrl,
+          'Activo': p.activo ? 'Si' : 'No'
+        });
+      }
     } catch (e) {
       console.error('❌ Error creando la hoja Blog:', e);
       throw new Error('No se pudo crear ni acceder a la hoja Blog');
@@ -818,7 +869,7 @@ export async function getAllBlogPosts(): Promise<BlogPostItem[]> {
   const sheet = await getBlogSheet();
   const rows = await sheet.getRows();
 
-  return rows.map(row => ({
+  const postsFromSheet: BlogPostItem[] = rows.map(row => ({
     id: row.get('ID') || '',
     slug: row.get('Slug') || '',
     title: row.get('Titulo') || '',
@@ -830,6 +881,34 @@ export async function getAllBlogPosts(): Promise<BlogPostItem[]> {
     imageUrl: row.get('ImagenURL') || '/blog/cables-carga-lenta.png',
     activo: (row.get('Activo') || 'Si').toLowerCase() === 'si',
   }));
+
+  // Auto-sincronizar los posts base que pudieran faltar en la hoja de Sheets
+  const existingSlugs = new Set(postsFromSheet.map(p => p.slug));
+  const missingPosts = defaultBlogPosts.filter(p => !existingSlugs.has(p.slug));
+
+  if (missingPosts.length > 0) {
+    try {
+      for (const p of missingPosts) {
+        await sheet.addRow({
+          'ID': p.id,
+          'Slug': p.slug,
+          'Titulo': p.title,
+          'Extracto': p.excerpt,
+          'Contenido': p.content,
+          'Fecha': p.date,
+          'Categoria': p.category,
+          'Tags': Array.isArray(p.tags) ? p.tags.join(', ') : p.tags,
+          'ImagenURL': p.imageUrl,
+          'Activo': p.activo ? 'Si' : 'No'
+        });
+        postsFromSheet.push(p);
+      }
+    } catch (err) {
+      console.error('Error auto-syncing missing posts to Sheets:', err);
+    }
+  }
+
+  return postsFromSheet;
 }
 
 // Obtener solo los posts activos del blog (para el público)
