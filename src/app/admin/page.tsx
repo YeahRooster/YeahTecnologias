@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye, Users, Check, ShieldAlert, ShoppingCart, Plus, Trash2, FileText, UserPlus, CreditCard, RotateCcw, Megaphone, MessageSquare, Download, Mail, Send, Edit3, GripVertical } from 'lucide-react';
+import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye, Users, Check, ShieldAlert, ShoppingCart, Plus, Trash2, FileText, UserPlus, CreditCard, RotateCcw, Megaphone, MessageSquare, Download, Mail, Send, Edit3, GripVertical, BookOpen, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import styles from './admin.module.css';
 
 interface Order {
@@ -50,10 +50,42 @@ interface PosClient {
     type: 'Mayorista' | 'Consumidor Final';
 }
 
+interface BlogPostAdmin {
+    id: string;
+    slug: string;
+    title: string;
+    excerpt: string;
+    content: string;
+    date: string;
+    category: string;
+    tags: string[];
+    imageUrl: string;
+    activo: boolean;
+}
+
 export default function AdminPage() {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios' | 'facturador' | 'campañas' | 'rma' | 'banners'>('pedidos');
+    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios' | 'facturador' | 'campañas' | 'rma' | 'banners' | 'blog'>('pedidos');
+
+    // Estados para Blog Admin
+    const [adminBlogPosts, setAdminBlogPosts] = useState<BlogPostAdmin[]>([]);
+    const [loadingBlog, setLoadingBlog] = useState(false);
+    const [blogSearchTerm, setBlogSearchTerm] = useState('');
+    const [blogFilterCat, setBlogFilterCat] = useState('Todas');
+    const [showBlogModal, setShowBlogModal] = useState(false);
+    const [editingPostId, setEditingPostId] = useState<string | null>(null);
+    const [isSavingBlog, setIsSavingBlog] = useState(false);
+    const [blogFormData, setBlogFormData] = useState({
+        title: '',
+        slug: '',
+        excerpt: '',
+        content: '',
+        category: 'Tecnología',
+        tags: '',
+        imageUrl: '/blog/modo-mostrador-guia.jpg',
+        activo: true
+    });
 
     // Estados para Banners
     interface BannerAdmin {
@@ -196,6 +228,21 @@ export default function AdminPage() {
         }
     };
 
+    const fetchBlogPostsAdmin = async () => {
+        setLoadingBlog(true);
+        try {
+            const res = await fetch('/api/admin/blog');
+            if (res.ok) {
+                const data = await res.json();
+                setAdminBlogPosts(Array.isArray(data) ? data : []);
+            }
+        } catch (e) {
+            console.error('Error fetching blog posts:', e);
+        } finally {
+            setLoadingBlog(false);
+        }
+    };
+
     useEffect(() => {
         if (isAuthenticated) {
             if (activeTab === 'usuarios') fetchUsers();
@@ -214,6 +261,9 @@ export default function AdminPage() {
             }
             if (activeTab === 'banners') {
                 fetchBannersAdmin();
+            }
+            if (activeTab === 'blog') {
+                fetchBlogPostsAdmin();
             }
         }
     }, [isAuthenticated, activeTab]);
@@ -353,6 +403,112 @@ export default function AdminPage() {
             });
         } catch (e) {
             console.error('Error al reordenar banners:', e);
+        }
+    };
+
+    // --- BLOG HANDLERS ---
+    const handleOpenNewPost = () => {
+        setEditingPostId(null);
+        setBlogFormData({
+            title: '',
+            slug: '',
+            excerpt: '',
+            content: '',
+            category: 'Tecnología',
+            tags: '',
+            imageUrl: '/blog/modo-mostrador-guia.jpg',
+            activo: true
+        });
+        setShowBlogModal(true);
+    };
+
+    const handleOpenEditPost = (p: BlogPostAdmin) => {
+        setEditingPostId(p.id);
+        setBlogFormData({
+            title: p.title,
+            slug: p.slug,
+            excerpt: p.excerpt,
+            content: p.content,
+            category: p.category || 'Tecnología',
+            tags: Array.isArray(p.tags) ? p.tags.join(', ') : (p.tags || ''),
+            imageUrl: p.imageUrl || '/blog/modo-mostrador-guia.jpg',
+            activo: p.activo
+        });
+        setShowBlogModal(true);
+    };
+
+    const handleSaveBlogPost = async () => {
+        if (!blogFormData.title.trim()) return alert('El título es obligatorio.');
+        if (!blogFormData.content.trim()) return alert('El contenido del artículo es obligatorio.');
+
+        setIsSavingBlog(true);
+        try {
+            const payload = {
+                id: editingPostId,
+                title: blogFormData.title,
+                slug: blogFormData.slug.trim() || blogFormData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''),
+                excerpt: blogFormData.excerpt,
+                content: blogFormData.content,
+                category: blogFormData.category || 'General',
+                tags: blogFormData.tags.split(',').map(t => t.trim()).filter(Boolean),
+                imageUrl: blogFormData.imageUrl || '/blog/modo-mostrador-guia.jpg',
+                activo: blogFormData.activo
+            };
+
+            const url = '/api/admin/blog';
+            const method = editingPostId ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert(editingPostId ? '✅ Artículo actualizado correctamente' : '✅ Artículo publicado con éxito');
+                setShowBlogModal(false);
+                setEditingPostId(null);
+                fetchBlogPostsAdmin();
+            } else {
+                const err = await res.json();
+                alert(`❌ Error: ${err.error || 'No se pudo guardar el artículo'}`);
+            }
+        } catch (e) {
+            console.error('Error guardando blog:', e);
+            alert('❌ Error de conexión al guardar el artículo');
+        } finally {
+            setIsSavingBlog(false);
+        }
+    };
+
+    const handleToggleBlogPost = async (id: string, currentStatus: boolean) => {
+        try {
+            const res = await fetch('/api/admin/blog', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, activo: !currentStatus })
+            });
+            if (res.ok) {
+                fetchBlogPostsAdmin();
+            }
+        } catch (e) {
+            console.error('Error cambiando estado del post:', e);
+        }
+    };
+
+    const handleDeleteBlogPost = async (id: string) => {
+        if (!confirm('¿Seguro que querés eliminar este artículo del Blog?')) return;
+        try {
+            const res = await fetch(`/api/admin/blog?id=${encodeURIComponent(id)}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                fetchBlogPostsAdmin();
+            } else {
+                alert('No se pudo eliminar el artículo');
+            }
+        } catch (e) {
+            console.error('Error eliminando post:', e);
         }
     };
 
@@ -578,6 +734,12 @@ export default function AdminPage() {
                             onClick={() => setActiveTab('banners')}
                         >
                             <img src="/ads/rooster_banner.png" alt="Banners" style={{width: 18, height: 18, objectFit: 'contain'}} /> Banners
+                        </button>
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === 'blog' ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab('blog')}
+                        >
+                            <BookOpen size={18} /> Blog
                         </button>
                     </nav>
                 </div>
@@ -1080,6 +1242,179 @@ export default function AdminPage() {
                             )}
                         </div>
                     </div>
+                </div>
+            ) : activeTab === 'blog' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {/* Header de la sección Blog */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'white', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                        <div>
+                            <h2 style={{ fontSize: '1.4rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                                <BookOpen size={24} color="#2563eb" />
+                                Gestión de Artículos del Blog
+                            </h2>
+                            <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
+                                Redactá, editá y publicá notas y guías para tus clientes y revendedores.
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleOpenNewPost}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                background: '#2563eb', color: 'white', border: 'none',
+                                padding: '0.75rem 1.25rem', borderRadius: '8px',
+                                fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer',
+                                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
+                            }}
+                        >
+                            <Plus size={18} /> Nuevo Artículo
+                        </button>
+                    </div>
+
+                    {/* Controles: Buscador y Filtro */}
+                    <div className={styles.controls} style={{ marginBottom: 0 }}>
+                        <div className={styles.searchBar}>
+                            <Search size={20} />
+                            <input
+                                type="text"
+                                placeholder="Buscar artículos por título, categoría o tags..."
+                                value={blogSearchTerm}
+                                onChange={e => setBlogSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className={styles.filters}>
+                            {['Todas', 'Revendedores', 'Tecnología', 'Accesorios', 'Consejos', 'General'].map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setBlogFilterCat(cat)}
+                                    className={blogFilterCat === cat ? styles.activeFilter : ''}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Listado de Artículos */}
+                    {loadingBlog ? (
+                        <div style={{ textAlign: 'center', padding: '3rem', background: 'white', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                            <p style={{ color: '#64748b' }}>Cargando artículos del blog...</p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.5rem' }}>
+                            {adminBlogPosts
+                                .filter(p => {
+                                    const matchesSearch = p.title.toLowerCase().includes(blogSearchTerm.toLowerCase()) ||
+                                        p.category.toLowerCase().includes(blogSearchTerm.toLowerCase()) ||
+                                        (Array.isArray(p.tags) && p.tags.some(t => t.toLowerCase().includes(blogSearchTerm.toLowerCase())));
+                                    const matchesCat = blogFilterCat === 'Todas' || p.category.toLowerCase() === blogFilterCat.toLowerCase();
+                                    return matchesSearch && matchesCat;
+                                })
+                                .map(post => (
+                                    <div
+                                        key={post.id}
+                                        style={{
+                                            background: 'white',
+                                            borderRadius: '12px',
+                                            border: '1px solid var(--border)',
+                                            overflow: 'hidden',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                                            transition: 'transform 0.2s',
+                                        }}
+                                    >
+                                        <div style={{ position: 'relative', height: '160px', width: '100%', background: '#0f172a' }}>
+                                            <img
+                                                src={post.imageUrl}
+                                                alt={post.title}
+                                                onError={e => { (e.target as HTMLImageElement).src = '/blog/cables-carga-lenta.png'; }}
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                            <span style={{
+                                                position: 'absolute', top: '10px', left: '10px',
+                                                background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(4px)',
+                                                color: '#38bdf8', padding: '3px 8px', borderRadius: '4px',
+                                                fontSize: '0.75rem', fontWeight: 700
+                                            }}>
+                                                {post.category}
+                                            </span>
+                                            <span style={{
+                                                position: 'absolute', top: '10px', right: '10px',
+                                                background: post.activo ? '#16a34a' : '#64748b',
+                                                color: 'white', padding: '3px 8px', borderRadius: '4px',
+                                                fontSize: '0.75rem', fontWeight: 700
+                                            }}>
+                                                {post.activo ? 'Publicado' : 'Borrador'}
+                                            </span>
+                                        </div>
+
+                                        <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.3rem' }}>
+                                                📅 {post.date || 'Sin fecha'} | 🔗 /{post.slug}
+                                            </div>
+                                            <h3 style={{ fontSize: '1.1rem', color: '#0f172a', fontWeight: 700, marginBottom: '0.5rem', lineHeight: 1.3 }}>
+                                                {post.title}
+                                            </h3>
+                                            <p style={{
+                                                fontSize: '0.85rem', color: '#64748b', lineHeight: 1.5,
+                                                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                                                overflow: 'hidden', marginBottom: '1rem', flex: 1
+                                            }}>
+                                                {post.excerpt || 'Sin extracto...'}
+                                            </p>
+
+                                            <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid #f1f5f9', paddingTop: '1rem', marginTop: 'auto' }}>
+                                                <a
+                                                    href={`/blog/${post.slug}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    title="Ver nota en la web"
+                                                    style={{
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        padding: '0.5rem 0.75rem', background: '#f8fafc', border: '1px solid #cbd5e1',
+                                                        borderRadius: '6px', color: '#475569', cursor: 'pointer', textDecoration: 'none'
+                                                    }}
+                                                >
+                                                    <ExternalLink size={16} />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleOpenEditPost(post)}
+                                                    style={{
+                                                        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem',
+                                                        padding: '0.5rem', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe',
+                                                        borderRadius: '6px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    <Edit3 size={15} /> Editar
+                                                </button>
+                                                <button
+                                                    onClick={() => handleToggleBlogPost(post.id, post.activo)}
+                                                    style={{
+                                                        padding: '0.5rem 0.75rem',
+                                                        background: post.activo ? '#fee2e2' : '#f0fdf4',
+                                                        color: post.activo ? '#dc2626' : '#16a34a',
+                                                        border: `1px solid ${post.activo ? '#fecaca' : '#bbf7d0'}`,
+                                                        borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    {post.activo ? 'Ocultar' : 'Publicar'}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteBlogPost(post.id)}
+                                                    title="Eliminar artículo"
+                                                    style={{
+                                                        padding: '0.5rem 0.75rem', background: '#fef2f2', color: '#ef4444',
+                                                        border: '1px solid #fee2e2', borderRadius: '6px', cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                        </div>
+                    )}
                 </div>
             ) : activeTab === 'rma' ? (
                 <div className={styles.rmaAdminContainer}>
@@ -1604,6 +1939,253 @@ export default function AdminPage() {
                                     </p>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL CREAR / EDITAR ARTÍCULO DEL BLOG */}
+            {showBlogModal && (
+                <div className={styles.modalOverlay} onClick={() => setShowBlogModal(false)}>
+                    <div className={styles.modal} onClick={e => e.stopPropagation()} style={{ maxWidth: '850px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+                        <div className={styles.modalHeader}>
+                            <div>
+                                <h2>{editingPostId ? '✏️ Editar Artículo del Blog' : '📝 Crear Nuevo Artículo'}</h2>
+                                <p className={styles.modalDate}>Completá la información del artículo que se mostrará en el blog.</p>
+                            </div>
+                            <button className={styles.closeBtn} onClick={() => setShowBlogModal(false)}><X size={24} /></button>
+                        </div>
+
+                        <div className={styles.modalContent} style={{ overflowY: 'auto', flex: 1, paddingRight: '0.5rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                {/* Título */}
+                                <div>
+                                    <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.3rem', color: '#1e293b' }}>
+                                        Título del Artículo: *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ej: Guía de mejores accesorios para celulares en 2026"
+                                        value={blogFormData.title}
+                                        onChange={e => {
+                                            const newTitle = e.target.value;
+                                            setBlogFormData(prev => ({
+                                                ...prev,
+                                                title: newTitle,
+                                                // Si el slug no fue personalizado manualmente, sugerir slug
+                                                slug: editingPostId ? prev.slug : newTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+                                            }));
+                                        }}
+                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                                    />
+                                </div>
+
+                                {/* Slug y Categoría en 2 columnas */}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.3rem', color: '#1e293b' }}>
+                                            URL / Slug (ej: mi-nuevo-articulo):
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="mi-articulo"
+                                            value={blogFormData.slug}
+                                            onChange={e => setBlogFormData({ ...blogFormData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                                            style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontFamily: 'monospace' }}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.3rem', color: '#1e293b' }}>
+                                            Categoría:
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="Revendedores, Tecnología, etc."
+                                            value={blogFormData.category}
+                                            onChange={e => setBlogFormData({ ...blogFormData, category: e.target.value })}
+                                            style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                                        />
+                                        <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.3rem', flexWrap: 'wrap' }}>
+                                            {['Revendedores', 'Tecnología', 'Accesorios', 'Consejos', 'General'].map(cat => (
+                                                <button
+                                                    key={cat}
+                                                    type="button"
+                                                    onClick={() => setBlogFormData({ ...blogFormData, category: cat })}
+                                                    style={{ padding: '2px 6px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}
+                                                >
+                                                    {cat}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Tags */}
+                                <div>
+                                    <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.3rem', color: '#1e293b' }}>
+                                        Etiquetas / Tags (separados por coma):
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ej: Celulares, Guía, Ofertas, Carga Rápida"
+                                        value={blogFormData.tags}
+                                        onChange={e => setBlogFormData({ ...blogFormData, tags: e.target.value })}
+                                        style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                                    />
+                                </div>
+
+                                {/* Imagen de Portada */}
+                                <div>
+                                    <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.3rem', color: '#1e293b' }}>
+                                        Imagen de Portada:
+                                    </label>
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="URL de la imagen o /blog/nombre.jpg"
+                                            value={blogFormData.imageUrl}
+                                            onChange={e => setBlogFormData({ ...blogFormData, imageUrl: e.target.value })}
+                                            style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                                        />
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            id="blog-image-upload"
+                                            style={{ display: 'none' }}
+                                            onChange={e => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setBlogFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        />
+                                        <label
+                                            htmlFor="blog-image-upload"
+                                            style={{
+                                                padding: '0.65rem 1rem', background: '#0284c7', color: 'white',
+                                                borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                                                display: 'flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            <ImageIcon size={16} /> Subir Foto PC
+                                        </label>
+                                    </div>
+                                    {blogFormData.imageUrl && (
+                                        <div style={{ position: 'relative', height: '120px', maxWidth: '240px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', background: '#0f172a' }}>
+                                            <img src={blogFormData.imageUrl} alt="Vista previa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Extracto / Resumen corto */}
+                                <div>
+                                    <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.3rem', color: '#1e293b' }}>
+                                        Extracto / Resumen Corto (se muestra en las tarjetas):
+                                    </label>
+                                    <textarea
+                                        rows={2}
+                                        placeholder="Breve descripción de qué trata la nota..."
+                                        value={blogFormData.excerpt}
+                                        onChange={e => setBlogFormData({ ...blogFormData, excerpt: e.target.value })}
+                                        style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', resize: 'vertical' }}
+                                    />
+                                </div>
+
+                                {/* Contenido del Post con botonera de formato */}
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                                        <label style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1e293b' }}>
+                                            Contenido del Artículo: *
+                                        </label>
+                                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setBlogFormData(prev => ({ ...prev, content: prev.content + '\n<h3>Subtítulo de Sección</h3>\n<p>Escribí el texto aquí...</p>\n' }))}
+                                                style={{ padding: '2px 6px', background: '#e0f2fe', border: '1px solid #bae6fd', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}
+                                            >
+                                                + Subtítulo H3
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setBlogFormData(prev => ({ ...prev, content: prev.content + '<p>Párrafo de texto...</p>\n' }))}
+                                                style={{ padding: '2px 6px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                                            >
+                                                + Párrafo
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setBlogFormData(prev => ({ ...prev, content: prev.content + '<strong>Texto en Negrita</strong> ' }))}
+                                                style={{ padding: '2px 6px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
+                                            >
+                                                + Negrita
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setBlogFormData(prev => ({ ...prev, content: prev.content + '<ul>\n  <li>Elemento 1</li>\n  <li>Elemento 2</li>\n</ul>\n' }))}
+                                                style={{ padding: '2px 6px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                                            >
+                                                + Lista
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setBlogFormData(prev => ({ ...prev, content: prev.content + '<p style="background:#f0fdf4;padding:1rem;border-left:4px solid #16a34a;border-radius:6px;"><strong>Tip:</strong> Consejo destacado...</p>\n' }))}
+                                                style={{ padding: '2px 6px', background: '#dcfce7', border: '1px solid #bbf7d0', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', color: '#15803d', fontWeight: 600 }}
+                                            >
+                                                + Cuadro Verde
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea
+                                        rows={10}
+                                        placeholder="Escribí el contenido del artículo. Podés usar etiquetas HTML simples como <p>, <h3>, <strong>, <ul>, <li>..."
+                                        value={blogFormData.content}
+                                        onChange={e => setBlogFormData({ ...blogFormData, content: e.target.value })}
+                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontFamily: 'monospace', lineHeight: 1.5, resize: 'vertical' }}
+                                    />
+                                </div>
+
+                                {/* Switch Activo */}
+                                <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={blogFormData.activo}
+                                            onChange={e => setBlogFormData({ ...blogFormData, activo: e.target.checked })}
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                        />
+                                        Publicar inmediatamente en el blog (Activo)
+                                    </label>
+                                    <small style={{ color: '#64748b', display: 'block', marginLeft: '26px' }}>
+                                        Si desmarcás esto, quedará guardado como borrador y no será visible para los clientes.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', padding: '1rem 0 0 0', borderTop: '1px solid var(--border)' }}>
+                            <button
+                                type="button"
+                                onClick={() => setShowBlogModal(false)}
+                                style={{ padding: '0.75rem 1.25rem', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSaveBlogPost}
+                                disabled={isSavingBlog}
+                                style={{
+                                    padding: '0.75rem 1.5rem', background: '#2563eb', color: 'white', border: 'none',
+                                    borderRadius: '8px', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem'
+                                }}
+                            >
+                                <Save size={18} /> {isSavingBlog ? 'Guardando...' : editingPostId ? 'Guardar Cambios' : 'Publicar Artículo'}
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -735,5 +735,184 @@ export async function reorderBanners(idList: string[]): Promise<boolean> {
   return true;
 }
 
+// ----------------------------------------------------
+// GESTIÓN DE BLOG EN GOOGLE SHEETS
+// ----------------------------------------------------
+
+export interface BlogPostItem {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  date: string;
+  category: string;
+  tags: string[];
+  imageUrl: string;
+  activo: boolean;
+}
+
+// Obtener o crear la hoja 'Blog'
+export async function getBlogSheet() {
+  const doc = await getDoc();
+  let blogSheet = doc.sheetsByTitle['Blog'];
+
+  if (!blogSheet) {
+    try {
+      blogSheet = await doc.addSheet({
+        title: 'Blog',
+        headerValues: ['ID', 'Slug', 'Titulo', 'Extracto', 'Contenido', 'Fecha', 'Categoria', 'Tags', 'ImagenURL', 'Activo']
+      });
+      console.log('✅ Hoja Blog creada automáticamente en Google Sheets');
+
+      // Auto-popular con los posts iniciales
+      await blogSheet.addRow({
+        'ID': '6',
+        'Slug': 'guia-modo-mostrador-revendedores',
+        'Titulo': 'Guía paso a paso: Cómo usar el Modo Mostrador para vender con tu propia marca',
+        'Extracto': 'Descubrí cómo convertir nuestro catálogo en tu propia tienda online personalizada: configurá tu margen de ganancia, cargá tu logo y recibí pedidos directos a tu WhatsApp.',
+        'Contenido': '<p>¿Tenés un local de tecnología, vendés por redes sociales o te gustaría ofrecer productos a tus clientes sin invertir en crear una página web desde cero? El <strong>Modo Mostrador (Marca Blanca)</strong> de Yeah! Tecnologías está pensado especialmente para vos.</p><p>Con esta herramienta podés usar todo nuestro catálogo frente a tus clientes o enviarles un link por WhatsApp con <strong>tus propios precios de venta, tu logo y tus datos de contacto</strong>, sin que nadie vea tus costos mayoristas.</p><h3>💼 ¿Qué ventajas te da el Modo Mostrador?</h3><ul><li><strong>Precios automáticos con tu ganancia:</strong> Elegís tu margen de recargo (+30%, +40%, +50%, +70% o personalizado) y todos los precios se recalculan en tiempo real.</li><li><strong>Tu marca en primer plano:</strong> Podés cargar el nombre de tu local y subir tu propio logo para que reemplace cualquier información institucional.</li><li><strong>Pedidos directos a tu WhatsApp:</strong> Tus clientes finales verán un botón verde <em>“📲 Pedir por WhatsApp a [Tu Local]”</em> para encargarte el producto directamente a tu teléfono.</li><li><strong>Descarga de fotos limpias y textos para redes:</strong> Cada producto cuenta con un botón para descargar la foto en alta resolución sin marcas y copiar el texto listo para tus historias o estados.</li></ul>',
+        'Fecha': '28 Ago, 2026',
+        'Categoria': 'Revendedores',
+        'Tags': 'Revendedores, Modo Mostrador, Marca Blanca, Ventas, Tutorial',
+        'ImagenURL': '/blog/modo-mostrador-guia.jpg',
+        'Activo': 'Si'
+      });
+
+      await blogSheet.addRow({
+        'ID': '5',
+        'Slug': 'cables-carga-lenta-reclamos',
+        'Titulo': 'Por qué algunos cables cargan lento (aunque sean nuevos) y cómo evitar reclamos',
+        'Extracto': 'No todos los cables son iguales. Aprende a identificar un cable de calidad y evita el reclamo más común en accesorios de celulares.',
+        'Contenido': '<p>Uno de los reclamos más comunes en accesorios para celulares es: <strong>“El cable es nuevo, pero carga lento”.</strong></p><p>La realidad es que no todos los cables son iguales, y muchos problemas se pueden evitar si se entiende qué mirar antes de vender o comprar.</p><h3>🔌 No todos los cables cargan igual</h3><ul><li><strong>Grosor interno del cable:</strong> Los cables más finos pierden energía. Cuanto más largo y más fino, peor rinde la carga.</li><li><strong>Material interno:</strong> Un buen cable usa cobre de mejor calidad.</li><li><strong>Carga vs carga + datos:</strong> Un cable de mala calidad puede fallar en ambas cosas.</li></ul>',
+        'Fecha': '12 Ene, 2026',
+        'Categoria': 'Accesorios',
+        'Tags': 'Cables, Carga, Consejos, Ventas',
+        'ImagenURL': '/blog/cables-carga-lenta.png',
+        'Activo': 'Si'
+      });
+
+      await blogSheet.addRow({
+        'ID': '4',
+        'Slug': 'cargadores-rapidos-bateria',
+        'Titulo': 'Cargadores rápidos y batería del celular: lo que de verdad importa',
+        'Extracto': 'No todo es marketing. Aprende a identificar un buen cargador, qué es el amperaje y cómo cuidar la vida útil de tu batería sin mitos.',
+        'Contenido': '<p>Hoy casi todos los celulares prometen “carga rápida”, “turbo” o “fast charge”. El problema es que no siempre está claro qué es real, qué es marketing y qué conviene usar para no arruinar la batería con el tiempo.</p><h3>🔌 Voltaje y Amperaje</h3><p>El amperaje estable importa mucho más que una caja llena de Watts y promesas de marketing.</p>',
+        'Fecha': '03 Ene, 2026',
+        'Categoria': 'Tecnología',
+        'Tags': 'Cargadores, Batería, Guía, Mitos',
+        'ImagenURL': '/blog/charger-battery.png',
+        'Activo': 'Si'
+      });
+    } catch (e) {
+      console.error('❌ Error creando la hoja Blog:', e);
+      throw new Error('No se pudo crear ni acceder a la hoja Blog');
+    }
+  }
+
+  return blogSheet;
+}
+
+// Obtener todos los posts del blog (para admin)
+export async function getAllBlogPosts(): Promise<BlogPostItem[]> {
+  const sheet = await getBlogSheet();
+  const rows = await sheet.getRows();
+
+  return rows.map(row => ({
+    id: row.get('ID') || '',
+    slug: row.get('Slug') || '',
+    title: row.get('Titulo') || '',
+    excerpt: row.get('Extracto') || '',
+    content: row.get('Contenido') || '',
+    date: row.get('Fecha') || '',
+    category: row.get('Categoria') || 'General',
+    tags: (row.get('Tags') || '').split(',').map((t: string) => t.trim()).filter(Boolean),
+    imageUrl: row.get('ImagenURL') || '/blog/cables-carga-lenta.png',
+    activo: (row.get('Activo') || 'Si').toLowerCase() === 'si',
+  }));
+}
+
+// Obtener solo los posts activos del blog (para el público)
+export async function getPublicBlogPosts(): Promise<BlogPostItem[]> {
+  const posts = await getAllBlogPosts();
+  return posts.filter(p => p.activo);
+}
+
+// Obtener post por slug
+export async function getBlogPostBySlug(slug: string): Promise<BlogPostItem | null> {
+  const posts = await getAllBlogPosts();
+  return posts.find(p => p.slug === slug && p.activo) || null;
+}
+
+// Crear nuevo post
+export async function createBlogPost(data: Omit<BlogPostItem, 'id'>): Promise<string> {
+  const sheet = await getBlogSheet();
+  const idPost = `POST-${Date.now()}`;
+  const slug = data.slug || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
+  await sheet.addRow({
+    'ID': idPost,
+    'Slug': slug,
+    'Titulo': data.title,
+    'Extracto': data.excerpt || '',
+    'Contenido': data.content || '',
+    'Fecha': data.date || new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }),
+    'Categoria': data.category || 'General',
+    'Tags': Array.isArray(data.tags) ? data.tags.join(', ') : (data.tags || ''),
+    'ImagenURL': data.imageUrl || '/blog/cables-carga-lenta.png',
+    'Activo': data.activo !== false ? 'Si' : 'No'
+  });
+
+  cachedDoc = null;
+  lastConnectionTime = 0;
+
+  return idPost;
+}
+
+// Actualizar post existente
+export async function updateBlogPost(id: string, updates: Partial<BlogPostItem>): Promise<boolean> {
+  const sheet = await getBlogSheet();
+  const rows = await sheet.getRows();
+  const row = rows.find(r => r.get('ID') === id);
+
+  if (!row) return false;
+
+  if (updates.slug !== undefined) row.set('Slug', updates.slug);
+  if (updates.title !== undefined) row.set('Titulo', updates.title);
+  if (updates.excerpt !== undefined) row.set('Extracto', updates.excerpt);
+  if (updates.content !== undefined) row.set('Contenido', updates.content);
+  if (updates.date !== undefined) row.set('Fecha', updates.date);
+  if (updates.category !== undefined) row.set('Categoria', updates.category);
+  if (updates.tags !== undefined) {
+    row.set('Tags', Array.isArray(updates.tags) ? updates.tags.join(', ') : updates.tags);
+  }
+  if (updates.imageUrl !== undefined) row.set('ImagenURL', updates.imageUrl);
+  if (updates.activo !== undefined) row.set('Activo', updates.activo ? 'Si' : 'No');
+
+  await row.save();
+
+  cachedDoc = null;
+  lastConnectionTime = 0;
+
+  return true;
+}
+
+// Eliminar post
+export async function deleteBlogPost(id: string): Promise<boolean> {
+  const sheet = await getBlogSheet();
+  const rows = await sheet.getRows();
+  const row = rows.find(r => r.get('ID') === id);
+
+  if (!row) return false;
+
+  await row.delete();
+
+  cachedDoc = null;
+  lastConnectionTime = 0;
+
+  return true;
+}
+
+
 
 

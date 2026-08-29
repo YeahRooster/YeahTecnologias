@@ -8,9 +8,22 @@ import styles from './article.module.css';
 
 export default function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
-    const article = getPostBySlug(slug);
-
+    const initialArticle = getPostBySlug(slug);
+    const [article, setArticle] = useState<any>(initialArticle);
+    const [loading, setLoading] = useState(!initialArticle);
     const [liked, setLiked] = useState(false);
+
+    useEffect(() => {
+        fetch(`/api/blog/${slug}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && !data.error) {
+                    setArticle(data);
+                }
+            })
+            .catch(err => console.error('Error fetching blog article:', err))
+            .finally(() => setLoading(false));
+    }, [slug]);
 
     useEffect(() => {
         // Verificar si ya le dio like antes
@@ -33,6 +46,14 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
         localStorage.setItem('blog_likes', JSON.stringify(storedLikes));
         setLiked(newValue);
     };
+
+    if (loading) {
+        return (
+            <div className="container" style={{ padding: '4rem', textAlign: 'center' }}>
+                <p>Cargando artículo...</p>
+            </div>
+        );
+    }
 
     if (!article) {
         return (

@@ -1,19 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getAllPosts, getAllCategories } from '@/data/blogPosts';
 import Link from 'next/link';
-import { Calendar, ArrowRight, Tag, BookOpen } from 'lucide-react';
+import { Calendar, ArrowRight, Tag, BookOpen, Loader2 } from 'lucide-react';
 import styles from './blog.module.css';
 
 export default function BlogPage() {
-    const allPosts = getAllPosts();
-    const categories = getAllCategories();
+    const [posts, setPosts] = useState<any[]>(getAllPosts());
+    const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState('Todas');
 
+    useEffect(() => {
+        fetch('/api/blog')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    setPosts(data);
+                }
+            })
+            .catch(err => console.error('Error cargando blog:', err))
+            .finally(() => setLoading(false));
+    }, []);
+
+    // Extraer categorías dinámicamente de los posts cargados
+    const categories = ['Todas', ...Array.from(new Set(posts.map(p => p.category).filter(Boolean)))];
+
     const filteredPosts = selectedCategory === 'Todas'
-        ? allPosts
-        : allPosts.filter(post => post.category === selectedCategory);
+        ? posts
+        : posts.filter(post => post.category === selectedCategory);
 
     return (
         <div className="container" style={{ padding: '2rem 1rem' }}>
