@@ -24,6 +24,8 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
     animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     max-height: 90vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .closeBtn {
@@ -54,6 +56,8 @@
     display: grid;
     grid-template-columns: 1.1fr 1fr;
     height: 100%;
+    min-height: 0;
+    max-height: 90vh;
 }
 
 .imageSection {
@@ -64,6 +68,8 @@
     align-items: center;
     justify-content: center;
     gap: 1.5rem;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .mainImageWrapper {
@@ -152,10 +158,31 @@
 }
 
 .infoSection {
-    padding: 3rem;
+    padding: 2.25rem 2.5rem;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    min-height: 0;
+    max-height: 90vh;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.infoSection::-webkit-scrollbar {
+    width: 6px;
+}
+
+.infoSection::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.infoSection::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 9999px;
+}
+
+.infoSection::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
 }
 
 .category {
@@ -168,18 +195,18 @@
 }
 
 .title {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 800;
     color: #1e293b;
-    line-height: 1.2;
-    margin-bottom: 1.5rem;
+    line-height: 1.25;
+    margin-bottom: 1.25rem;
 }
 
 .price {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
     font-weight: 800;
     color: #1e293b;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
 }
 
 /* --- Estilos Bloqueados --- */
@@ -187,7 +214,7 @@
     background: #f1f5f9;
     padding: 1.5rem;
     border-radius: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .blurredPriceLarge {
@@ -206,17 +233,18 @@
 }
 
 .description {
-    font-size: 1rem;
-    color: #64748b;
+    font-size: 0.95rem;
+    color: #475569;
     line-height: 1.6;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    white-space: pre-line;
 }
 
 .stockInfo {
     font-size: 0.9rem;
     font-weight: 600;
     color: #475569;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .inStock {
@@ -230,7 +258,9 @@
 .actions {
     display: flex;
     gap: 1rem;
-    margin-top: auto;
+    margin-top: 1.5rem;
+    padding-bottom: 0.5rem;
+    flex-shrink: 0;
 }
 
 .quantitySelector {
@@ -387,16 +417,26 @@
 }
 
 @media (max-width: 768px) {
+    .modal {
+        max-height: 92vh;
+        overflow-y: auto;
+    }
+
     .grid {
         grid-template-columns: 1fr;
+        max-height: none;
+        height: auto;
     }
 
     .imageSection {
         padding: 1.5rem;
+        overflow-y: visible;
     }
 
     .infoSection {
-        padding: 2rem;
+        padding: 1.5rem;
+        max-height: none;
+        overflow-y: visible;
     }
 
     .mainImageWrapper {
@@ -410,5 +450,10 @@
 
     .title {
         font-size: 1.5rem;
+    }
+
+    .actions {
+        margin-top: 1rem;
+        padding-bottom: 1rem;
     }
 }
