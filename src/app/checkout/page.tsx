@@ -9,7 +9,7 @@ import styles from './checkout.module.css';
 
 export default function CheckoutPage() {
     const router = useRouter();
-    const { items, totalPrice, clearCart } = useCart();
+    const { items, totalPrice, clearCart, minPurchaseAmount } = useCart();
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -23,6 +23,9 @@ export default function CheckoutPage() {
         }
     }, []);
 
+    const isBelowMin = totalPrice < minPurchaseAmount;
+    const remainingAmount = Math.max(0, minPurchaseAmount - totalPrice);
+
     const handleSubmit = async () => {
         if (!user) {
             router.push('/login');
@@ -31,6 +34,11 @@ export default function CheckoutPage() {
 
         if (items.length === 0) {
             setError('El carrito está vacío');
+            return;
+        }
+
+        if (isBelowMin) {
+            setError(`El monto mínimo de compra mayorista es de $${minPurchaseAmount.toLocaleString('es-AR')}. Te faltan $${remainingAmount.toLocaleString('es-AR')}.`);
             return;
         }
 
@@ -189,12 +197,27 @@ export default function CheckoutPage() {
 
                             {error && <div className={styles.error}>{error}</div>}
 
+                            {isBelowMin && (
+                                <div style={{
+                                    background: '#fffbeb', border: '1px solid #fef3c7', borderLeft: '4px solid #f59e0b',
+                                    padding: '0.85rem 1rem', borderRadius: '8px', margin: '1rem 0', color: '#92400e', fontSize: '0.9rem'
+                                }}>
+                                    ⚠️ <strong>Monto mínimo no alcanzado:</strong> El pedido mínimo mayorista es de <strong>${minPurchaseAmount.toLocaleString('es-AR')}</strong>. Te faltan <strong>${remainingAmount.toLocaleString('es-AR')}</strong> en productos.
+                                    <div style={{ marginTop: '0.5rem' }}>
+                                        <Link href="/catalogo" style={{ color: '#b45309', fontWeight: 700, textDecoration: 'underline' }}>
+                                            ← Volver al catálogo para agregar más productos
+                                        </Link>
+                                    </div>
+                                </div>
+                            )}
+
                             <button
                                 onClick={handleSubmit}
                                 className={styles.submitBtn}
-                                disabled={loading}
+                                disabled={loading || isBelowMin}
+                                style={isBelowMin ? { background: '#94a3b8', cursor: 'not-allowed' } : {}}
                             >
-                                {loading ? 'Procesando...' : 'Confirmar Pedido'}
+                                {loading ? 'Procesando...' : isBelowMin ? `Faltan $${remainingAmount.toLocaleString('es-AR')} para el mínimo` : 'Confirmar Pedido'}
                             </button>
 
                             <p className={styles.note}>

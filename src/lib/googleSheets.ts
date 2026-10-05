@@ -992,6 +992,84 @@ export async function deleteBlogPost(id: string): Promise<boolean> {
   return true;
 }
 
+// ----------------------------------------------------
+// GESTIÓN DE CONFIGURACIÓN / MÍNIMO DE COMPRA
+// ----------------------------------------------------
+
+export async function getConfigSheet() {
+  const doc = await getDoc();
+  let configSheet = doc.sheetsByTitle['Configuracion'];
+
+  if (!configSheet) {
+    try {
+      configSheet = await doc.addSheet({
+        title: 'Configuracion',
+        headerValues: ['Clave', 'Valor', 'Descripcion']
+      });
+      console.log('✅ Hoja Configuracion creada automáticamente');
+
+      // Valor inicial por defecto: $25.000
+      await configSheet.addRow({
+        'Clave': 'MINIMO_COMPRA_MAYORISTA',
+        'Valor': '25000',
+        'Descripcion': 'Monto mínimo en ARS para compras mayoristas en la web'
+      });
+    } catch (e) {
+      console.error('❌ Error creando la hoja Configuracion:', e);
+      throw new Error('No se pudo crear ni acceder a la hoja Configuracion');
+    }
+  }
+
+  return configSheet;
+}
+
+export async function getMinPurchaseAmount(): Promise<number> {
+  try {
+    const sheet = await getConfigSheet();
+    const rows = await sheet.getRows();
+    const row = rows.find(r => r.get('Clave') === 'MINIMO_COMPRA_MAYORISTA');
+
+    if (row && row.get('Valor')) {
+      const val = parseFloat(row.get('Valor'));
+      if (!isNaN(val) && val >= 0) {
+        return val;
+      }
+    }
+    return 25000;
+  } catch (error) {
+    console.error('Error fetching min purchase amount from Sheets, using default 25000:', error);
+    return 25000;
+  }
+}
+
+export async function setMinPurchaseAmount(amount: number): Promise<boolean> {
+  try {
+    const sheet = await getConfigSheet();
+    const rows = await sheet.getRows();
+    let row = rows.find(r => r.get('Clave') === 'MINIMO_COMPRA_MAYORISTA');
+
+    if (row) {
+      row.set('Valor', amount.toString());
+      await row.save();
+    } else {
+      await sheet.addRow({
+        'Clave': 'MINIMO_COMPRA_MAYORISTA',
+        'Valor': amount.toString(),
+        'Descripcion': 'Monto mínimo en ARS para compras mayoristas en la web'
+      });
+    }
+
+    cachedDoc = null;
+    lastConnectionTime = 0;
+
+    return true;
+  } catch (error) {
+    console.error('Error saving min purchase amount to Sheets:', error);
+    throw error;
+  }
+}
+
+
 
 
 

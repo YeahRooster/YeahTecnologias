@@ -22,6 +22,8 @@ interface CartContextType {
     totalPrice: number;
     isCartOpen: boolean;
     setIsCartOpen: (open: boolean) => void;
+    minPurchaseAmount: number;
+    refreshMinPurchaseAmount: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -29,6 +31,25 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [minPurchaseAmount, setMinPurchaseAmount] = useState<number>(25000);
+
+    const refreshMinPurchaseAmount = async () => {
+        try {
+            const res = await fetch('/api/config');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.minPurchaseAmount !== undefined) {
+                    setMinPurchaseAmount(Number(data.minPurchaseAmount));
+                }
+            }
+        } catch (e) {
+            console.error('Error fetching minPurchaseAmount:', e);
+        }
+    };
+
+    useEffect(() => {
+        refreshMinPurchaseAmount();
+    }, []);
 
     // Cargar carrito desde localStorage al iniciar
     useEffect(() => {
@@ -136,6 +157,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 totalPrice,
                 isCartOpen,
                 setIsCartOpen,
+                minPurchaseAmount,
+                refreshMinPurchaseAmount,
             }}
         >
             {children}

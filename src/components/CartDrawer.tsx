@@ -1,14 +1,18 @@
 'use client';
 
 import { useCart } from '@/context/CartContext';
-import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { X, Minus, Plus, Trash2, ShoppingBag, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import styles from './CartDrawer.module.css';
 
 export default function CartDrawer() {
-    const { items, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart, totalPrice, totalItems } = useCart();
+    const { items, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart, totalPrice, totalItems, minPurchaseAmount } = useCart();
 
     if (!isCartOpen) return null;
+
+    const isBelowMin = totalPrice < minPurchaseAmount;
+    const remainingAmount = Math.max(0, minPurchaseAmount - totalPrice);
+    const progressPercent = Math.min(100, Math.round((totalPrice / minPurchaseAmount) * 100));
 
     return (
         <>
@@ -77,13 +81,48 @@ export default function CartDrawer() {
                         </div>
 
                         <div className={styles.footer}>
+                            {/* Alerta de Mínimo de Compra Mayorista */}
+                            <div className={isBelowMin ? styles.minAlertBox : styles.minSuccessBox}>
+                                <div className={styles.minHeader}>
+                                    {isBelowMin ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                                    <span>
+                                        {isBelowMin
+                                            ? `Mínimo mayorista: $${minPurchaseAmount.toLocaleString('es-AR')}`
+                                            : `¡Superaste el mínimo mayorista de $${minPurchaseAmount.toLocaleString('es-AR')}!`}
+                                    </span>
+                                </div>
+                                <div className={styles.progressBar}>
+                                    <div
+                                        className={isBelowMin ? styles.progressFill : styles.progressFillSuccess}
+                                        style={{ width: `${progressPercent}%` }}
+                                    />
+                                </div>
+                                {isBelowMin && (
+                                    <p className={styles.minText}>
+                                        Te faltan <strong>${remainingAmount.toLocaleString('es-AR')}</strong> para poder pedir.
+                                    </p>
+                                )}
+                            </div>
+
                             <div className={styles.total}>
                                 <span>Total:</span>
                                 <strong>${totalPrice.toLocaleString('es-AR')}</strong>
                             </div>
-                            <Link href="/checkout" className={styles.checkoutBtn} onClick={() => setIsCartOpen(false)}>
-                                Finalizar Pedido
-                            </Link>
+
+                            {isBelowMin ? (
+                                <button
+                                    className={styles.checkoutBtnDisabled}
+                                    disabled
+                                    title={`El pedido mínimo mayorista es de $${minPurchaseAmount.toLocaleString('es-AR')}`}
+                                >
+                                    Faltan ${remainingAmount.toLocaleString('es-AR')} para pedir
+                                </button>
+                            ) : (
+                                <Link href="/checkout" className={styles.checkoutBtn} onClick={() => setIsCartOpen(false)}>
+                                    Finalizar Pedido
+                                </Link>
+                            )}
+
                             <button onClick={() => setIsCartOpen(false)} className={styles.continueShoppingBtn}>
                                 Seguir Comprando
                             </button>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye, Users, Check, ShieldAlert, ShoppingCart, Plus, Trash2, FileText, UserPlus, CreditCard, RotateCcw, Megaphone, MessageSquare, Download, Mail, Send, Edit3, GripVertical, BookOpen, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import { Package, Search, Filter, X, Save, AlertTriangle, Printer, Eye, Users, Check, ShieldAlert, ShoppingCart, Plus, Trash2, FileText, UserPlus, CreditCard, RotateCcw, Megaphone, MessageSquare, Download, Mail, Send, Edit3, GripVertical, BookOpen, Image as ImageIcon, ExternalLink, Settings as SettingsIcon, Sliders, DollarSign } from 'lucide-react';
 import styles from './admin.module.css';
 
 interface Order {
@@ -66,7 +66,14 @@ interface BlogPostAdmin {
 export default function AdminPage() {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios' | 'facturador' | 'campañas' | 'rma' | 'banners' | 'blog'>('pedidos');
+    const [activeTab, setActiveTab] = useState<'pedidos' | 'usuarios' | 'facturador' | 'campañas' | 'rma' | 'banners' | 'blog' | 'config'>('pedidos');
+
+    // Estados para Configuración General / Mínimo de Compra
+    const [adminMinPurchase, setAdminMinPurchase] = useState<number>(25000);
+    const [tempMinPurchase, setTempMinPurchase] = useState<string>('25000');
+    const [loadingConfig, setLoadingConfig] = useState(false);
+    const [savingConfig, setSavingConfig] = useState(false);
+    const [configMessage, setConfigMessage] = useState('');
 
     // Estados para Blog Admin
     const [adminBlogPosts, setAdminBlogPosts] = useState<BlogPostAdmin[]>([]);
@@ -243,6 +250,57 @@ export default function AdminPage() {
         }
     };
 
+    const fetchAdminConfig = async () => {
+        setLoadingConfig(true);
+        try {
+            const res = await fetch('/api/admin/config');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.minPurchaseAmount !== undefined) {
+                    setAdminMinPurchase(Number(data.minPurchaseAmount));
+                    setTempMinPurchase(data.minPurchaseAmount.toString());
+                }
+            }
+        } catch (e) {
+            console.error('Error fetching admin config:', e);
+        } finally {
+            setLoadingConfig(false);
+        }
+    };
+
+    const handleSaveMinPurchase = async () => {
+        const val = parseFloat(tempMinPurchase);
+        if (isNaN(val) || val < 0) {
+            alert('Por favor ingresá un monto válido mayor o igual a 0');
+            return;
+        }
+
+        setSavingConfig(true);
+        setConfigMessage('');
+        try {
+            const res = await fetch('/api/admin/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minPurchaseAmount: val })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setAdminMinPurchase(val);
+                setConfigMessage('✅ Mínimo de compra guardado correctamente');
+                setTimeout(() => setConfigMessage(''), 4000);
+            } else {
+                const err = await res.json();
+                alert(`Error: ${err.error || 'No se pudo guardar'}`);
+            }
+        } catch (e) {
+            console.error('Error saving config:', e);
+            alert('Error de conexión al guardar');
+        } finally {
+            setSavingConfig(false);
+        }
+    };
+
     useEffect(() => {
         if (isAuthenticated) {
             if (activeTab === 'usuarios') fetchUsers();
@@ -264,6 +322,9 @@ export default function AdminPage() {
             }
             if (activeTab === 'blog') {
                 fetchBlogPostsAdmin();
+            }
+            if (activeTab === 'config') {
+                fetchAdminConfig();
             }
         }
     }, [isAuthenticated, activeTab]);
@@ -740,6 +801,12 @@ export default function AdminPage() {
                             onClick={() => setActiveTab('blog')}
                         >
                             <BookOpen size={18} /> Blog
+                        </button>
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === 'config' ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab('config')}
+                        >
+                            <SettingsIcon size={18} /> Configuración
                         </button>
                     </nav>
                 </div>
@@ -1415,6 +1482,139 @@ export default function AdminPage() {
                                 ))}
                         </div>
                     )}
+                </div>
+            ) : activeTab === 'config' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '800px', margin: '0 auto' }}>
+                    {/* Header */}
+                    <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                        <h2 style={{ fontSize: '1.4rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                            <SettingsIcon size={24} color="#2563eb" />
+                            Configuración General de la Tienda
+                        </h2>
+                        <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
+                            Administrá los parámetros comerciales de compras mayoristas y políticas del sitio.
+                        </p>
+                    </div>
+
+                    {/* Tarjeta de Mínimo de Compra Mayorista */}
+                    <div style={{ background: 'white', padding: '1.75rem', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>
+                                <DollarSign size={24} />
+                            </div>
+                            <div>
+                                <h3 style={{ fontSize: '1.15rem', color: '#0f172a', margin: 0, fontWeight: 700 }}>
+                                    Mínimo de Compra Mayorista (Web)
+                                </h3>
+                                <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>
+                                    Monto mínimo en pesos ($) requerido para finalizar pedidos en la tienda mayorista.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style={{ margin: '1.5rem 0' }}>
+                            <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 700, color: '#334155', marginBottom: '0.5rem' }}>
+                                Importe Mínimo Requerido (ARS):
+                            </label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', maxWidth: '380px' }}>
+                                <div style={{ position: 'relative', flex: 1 }}>
+                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748b', fontSize: '1.1rem' }}>
+                                        $
+                                    </span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1000"
+                                        value={tempMinPurchase}
+                                        onChange={e => setTempMinPurchase(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem 0.75rem 0.75rem 2rem',
+                                            borderRadius: '8px',
+                                            border: '2px solid #cbd5e1',
+                                            fontSize: '1.2rem',
+                                            fontWeight: 700,
+                                            color: '#0f172a'
+                                        }}
+                                        placeholder="25000"
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleSaveMinPurchase}
+                                    disabled={savingConfig}
+                                    style={{
+                                        padding: '0.75rem 1.5rem',
+                                        background: '#2563eb',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        fontWeight: 700,
+                                        fontSize: '0.95rem',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    <Save size={18} /> {savingConfig ? 'Guardando...' : 'Guardar Mínimo'}
+                                </button>
+                            </div>
+
+                            {/* Accesos rápidos */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Valores sugeridos:</span>
+                                {[15000, 20000, 25000, 30000, 50000].map(val => (
+                                    <button
+                                        key={val}
+                                        type="button"
+                                        onClick={() => setTempMinPurchase(val.toString())}
+                                        style={{
+                                            padding: '3px 8px',
+                                            background: tempMinPurchase === val.toString() ? '#eff6ff' : '#f8fafc',
+                                            border: `1px solid ${tempMinPurchase === val.toString() ? '#3b82f6' : '#cbd5e1'}`,
+                                            borderRadius: '4px',
+                                            fontSize: '0.8rem',
+                                            cursor: 'pointer',
+                                            color: tempMinPurchase === val.toString() ? '#2563eb' : '#475569',
+                                            fontWeight: tempMinPurchase === val.toString() ? 700 : 500
+                                        }}
+                                    >
+                                        ${val.toLocaleString('es-AR')}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {configMessage && (
+                                <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', color: '#16a34a', fontWeight: 600, fontSize: '0.9rem' }}>
+                                    {configMessage}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Reglas de aplicación */}
+                        <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.85rem', color: '#334155' }}>
+                                <span>🌐</span>
+                                <div>
+                                    <strong>Compras Mayoristas en la Web:</strong> El cliente mayorista verá el mínimo requerido de <strong>${adminMinPurchase.toLocaleString('es-AR')}</strong> con una barra de progreso y no podrá avanzar al checkout si no lo alcanza.
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.85rem', color: '#334155' }}>
+                                <span>🏪</span>
+                                <div>
+                                    <strong>Ventas en Mostrador / POS (Facturador):</strong> <u>Sin monto mínimo</u>. Podés realizar ventas, remitos o presupuestos por cualquier monto sin ninguna restricción.
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.85rem', color: '#334155' }}>
+                                <span>💼</span>
+                                <div>
+                                    <strong>Modo Mostrador (Revendedores):</strong> <u>Sin monto mínimo</u> para sus clientes finales que compran por WhatsApp con precio al público.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             ) : activeTab === 'rma' ? (
                 <div className={styles.rmaAdminContainer}>

@@ -1,16 +1,28 @@
 import { NextResponse } from 'next/server';
-import { createOrder, findUserByEmail } from '@/lib/googleSheets';
+import { createOrder, findUserByEmail, getMinPurchaseAmount } from '@/lib/googleSheets';
 import { sendOrderNotification } from '@/lib/email';
 
 export async function POST(request: Request) {
     try {
-        const { email, products, total, tipo } = await request.json();
+        const { email, products, total, tipo, isPos } = await request.json();
 
         if (!email || !products || products.length === 0) {
             return NextResponse.json(
                 { error: 'Datos incompletos' },
                 { status: 400 }
             );
+        }
+
+        // Si es venta mayorista en la web (no es mostrador / POS), validar monto mínimo
+        const isMostrador = isPos || tipo === 'Remito' || tipo === 'Presupuesto' || tipo === 'Nota de Crédito';
+        if (!isMostrador) {
+            const minAmount = await getMinPurchaseAmount();
+            if (total < minAmount) {
+                return NextResponse.json(
+                    { error: `El monto mínimo de compra mayorista es de $${minAmount.toLocaleString('es-AR')}. Tu pedido actual es de $${total.toLocaleString('es-AR')}.` },
+                    { status: 400 }
+                );
+            }
         }
 
         // Crear el pedido en Google Sheets
